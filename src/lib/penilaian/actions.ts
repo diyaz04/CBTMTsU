@@ -8,7 +8,14 @@ export async function saveEssayGrades(
   sessionId: string,
   grades: { questionId: string; skor: number }[]
 ) {
-  const { userId, admin } = await requirePenilaianAccess()
+  const { userId, supabase, admin } = await requirePenilaianAccess()
+
+  // Gerbang kepemilikan: "exam_attempts: staff read school" RLS cuma balikin
+  // baris kalau attempt ini satu sekolah sama staff yang login (atau dia
+  // super_admin). Kalau null, attemptId bukan hak staff ini — tolak sebelum
+  // admin client (yang bypass RLS) sempat nulis apa pun.
+  const { data: attempt } = await supabase.from("exam_attempts").select("id").eq("id", attemptId).maybeSingle()
+  if (!attempt) return { error: "Percobaan ujian tidak ditemukan." }
 
   for (const g of grades) {
     const { error } = await admin

@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireSchoolAdmin } from "@/lib/students/require-admin"
+import { assertStudentInSchool, requireSchoolAdmin } from "@/lib/students/require-admin"
 import { createStudentAccount } from "@/lib/students/service"
 import { usernameToStudentEmail } from "@/lib/auth/student-email"
 import { parseStudentsExcel } from "@/lib/students/excel"
@@ -29,7 +29,7 @@ export async function createStudent(_prevState: ActionState, formData: FormData)
 }
 
 export async function updateStudent(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const { admin } = await requireSchoolAdmin()
+  const { schoolId, role, admin } = await requireSchoolAdmin()
 
   const id = String(formData.get("id") ?? "")
   const nama = String(formData.get("nama") ?? "").trim()
@@ -40,6 +40,8 @@ export async function updateStudent(_prevState: ActionState, formData: FormData)
   if (!id || !nama || !kelas || !username || !tanggalLahir) {
     return { error: "Semua field wajib diisi." }
   }
+
+  await assertStudentInSchool(admin, id, schoolId, role)
 
   const { error: authError } = await admin.auth.admin.updateUserById(id, {
     email: usernameToStudentEmail(username),
@@ -60,13 +62,15 @@ export async function updateStudent(_prevState: ActionState, formData: FormData)
 }
 
 export async function resetStudentPassword(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const { admin } = await requireSchoolAdmin()
+  const { schoolId, role, admin } = await requireSchoolAdmin()
 
   const id = String(formData.get("id") ?? "")
   const password = String(formData.get("password") ?? "")
 
   if (!id || !password) return { error: "Password wajib diisi." }
   if (password.length < 6) return { error: "Password minimal 6 karakter." }
+
+  await assertStudentInSchool(admin, id, schoolId, role)
 
   const { error } = await admin.auth.admin.updateUserById(id, { password })
   if (error) return { error: error.message }
@@ -75,7 +79,8 @@ export async function resetStudentPassword(_prevState: ActionState, formData: Fo
 }
 
 export async function deleteStudent(id: string) {
-  const { admin } = await requireSchoolAdmin()
+  const { schoolId, role, admin } = await requireSchoolAdmin()
+  await assertStudentInSchool(admin, id, schoolId, role)
   const { error } = await admin.auth.admin.deleteUser(id)
   if (error) return { error: error.message }
 
