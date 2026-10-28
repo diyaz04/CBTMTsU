@@ -42,10 +42,17 @@ export default async function UjianDetailPage({
 
   const { data: studentRows } = await supabase
     .from("students")
-    .select("id, nisn, nama, kelas, username")
+    .select("id, nisn, nama, kelas, username, tanggal_lahir")
     .eq("school_id", exam.school_id)
     .order("nama")
-  const allStudents: StudentRow[] = studentRows ?? []
+  const allStudents: StudentRow[] = (studentRows ?? []).map((s) => ({
+    id: s.id,
+    nisn: s.nisn,
+    nama: s.nama,
+    kelas: s.kelas,
+    username: s.username,
+    tanggalLahir: s.tanggal_lahir,
+  }))
   const studentById = new Map(allStudents.map((s) => [s.id, s]))
 
   const sessionIds = sessions.map((s) => s.id)

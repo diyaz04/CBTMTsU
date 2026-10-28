@@ -8,8 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "Tidak punya akses." }, { status: 403 })
   }
 
-  const header = ["No", "NISN", "Nama", "Kelas", "Username", "Password"]
-  const contoh = [1, "1234567890", "Contoh Nama Siswa", "VII-A", "1234567890", "01012012"]
+  const header = ["No", "NISN", "Nama", "Kelas", "Username", "Tanggal Lahir"]
+  const contoh = [1, "1234567890", "Contoh Nama Siswa", "VII-A", "1234567890", "01/01/2012"]
   const sheet = XLSX.utils.aoa_to_sheet([header, contoh])
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, sheet, "Siswa")

@@ -4,4 +4,5 @@ export interface StudentRow {
   nama: string
   kelas: string
   username: string
+  tanggalLahir: string
 }

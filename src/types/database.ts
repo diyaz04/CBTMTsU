@@ -44,6 +44,7 @@ export interface Database {
           nama: string
           kelas: string
           username: string
+          tanggal_lahir: string
           created_at: string
         }
         Insert: {
@@ -53,6 +54,7 @@ export interface Database {
           nama: string
           kelas: string
           username: string
+          tanggal_lahir: string
           created_at?: string
         }
         Update: Partial<Database["public"]["Tables"]["students"]["Insert"]>

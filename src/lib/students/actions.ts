@@ -15,13 +15,13 @@ export async function createStudent(_prevState: ActionState, formData: FormData)
   const nama = String(formData.get("nama") ?? "").trim()
   const kelas = String(formData.get("kelas") ?? "").trim()
   const username = String(formData.get("username") ?? "").trim()
-  const password = String(formData.get("password") ?? "")
+  const tanggalLahir = String(formData.get("tanggalLahir") ?? "")
 
-  if (!nisn || !nama || !kelas || !username || !password) {
+  if (!nisn || !nama || !kelas || !username || !tanggalLahir) {
     return { error: "Semua field wajib diisi." }
   }
 
-  const result = await createStudentAccount(admin, { schoolId, nisn, nama, kelas, username, password })
+  const result = await createStudentAccount(admin, { schoolId, nisn, nama, kelas, username, tanggalLahir })
   if (!result.success) return { error: result.error }
 
   revalidatePath("/siswa")
@@ -35,8 +35,9 @@ export async function updateStudent(_prevState: ActionState, formData: FormData)
   const nama = String(formData.get("nama") ?? "").trim()
   const kelas = String(formData.get("kelas") ?? "").trim()
   const username = String(formData.get("username") ?? "").trim()
+  const tanggalLahir = String(formData.get("tanggalLahir") ?? "")
 
-  if (!id || !nama || !kelas || !username) {
+  if (!id || !nama || !kelas || !username || !tanggalLahir) {
     return { error: "Semua field wajib diisi." }
   }
 
@@ -47,7 +48,7 @@ export async function updateStudent(_prevState: ActionState, formData: FormData)
 
   const { error: dbError } = await admin
     .from("students")
-    .update({ nama, kelas, username })
+    .update({ nama, kelas, username, tanggal_lahir: tanggalLahir })
     .eq("id", id)
   if (dbError) {
     const message = dbError.code === "23505" ? "Username sudah dipakai siswa lain." : dbError.message
@@ -121,7 +122,7 @@ export async function importStudents(_prevState: ImportSummary | null, formData:
       nama: row.nama,
       kelas: row.kelas,
       username: row.username,
-      password: row.password,
+      tanggalLahir: row.tanggalLahir,
     })
 
     if (result.success) {

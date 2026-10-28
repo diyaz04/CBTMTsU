@@ -32,7 +32,8 @@ export function ImportStudentsDialog() {
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <p className="text-muted-foreground text-sm">
-            Kolom wajib: NISN, Nama, Kelas, Username, Password.{" "}
+            Kolom wajib: NISN, Nama, Kelas, Username, Tanggal Lahir (format DD/MM/YYYY — ini juga
+            jadi password login siswa).{" "}
             <a href="/api/siswa/template" className="underline" download>
               Download template
             </a>

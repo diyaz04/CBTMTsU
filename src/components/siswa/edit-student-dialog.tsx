@@ -63,6 +63,20 @@ export function EditStudentDialog({
               <Label htmlFor="edit-username">Username</Label>
               <Input id="edit-username" name="username" defaultValue={student.username} required />
             </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-tanggal-lahir">Tanggal Lahir</Label>
+              <Input
+                id="edit-tanggal-lahir"
+                name="tanggalLahir"
+                type="date"
+                defaultValue={student.tanggalLahir}
+                required
+              />
+              <p className="text-muted-foreground text-xs">
+                Ubah ini cuma update data tercatat, bukan password login. Pakai &quot;Reset
+                Password&quot; kalau mau samain password dengan tanggal lahir baru.
+              </p>
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" disabled={pending}>

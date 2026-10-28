@@ -13,7 +13,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-56 border-r p-4 flex flex-col gap-4">
+      <aside className="w-56 border-r p-4 flex flex-col gap-4 print:hidden">
         <p className="text-sm font-semibold">CBT MKKS</p>
         {/* TODO: sidebar nav per role — Fase 2+ (menu beda tiap role) */}
         <div className="mt-auto flex flex-col gap-2">
@@ -27,7 +27,7 @@ export default async function DashboardLayout({
           </form>
         </div>
       </aside>
-      <div className="flex-1 p-6">{children}</div>
+      <div className="flex-1 p-6 print:p-0">{children}</div>
     </div>
   )
 }

@@ -88,8 +88,9 @@ export function AddStudentDialog() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="add-password">Password</Label>
-            <Input id="add-password" name="password" required />
+            <Label htmlFor="add-tanggal-lahir">Tanggal Lahir</Label>
+            <Input id="add-tanggal-lahir" name="tanggalLahir" type="date" required />
+            <p className="text-muted-foreground text-xs">Password login = tanggal lahir (format DDMMYYYY).</p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
