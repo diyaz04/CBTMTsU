@@ -34,7 +34,7 @@ export default async function KartuPage({
   const cards = schoolId ? await getStudentCards(supabase, schoolId, kelas || undefined) : []
   const qrByStudent = new Map<string, string>()
   for (const c of cards) {
-    qrByStudent.set(c.studentId, await QRCode.toString(c.nisn, { type: "svg", width: 34, margin: 0 }))
+    qrByStudent.set(c.studentId, await QRCode.toString(c.nisn, { type: "svg", width: 40, margin: 0 }))
   }
   const tahun = tahunAjaran(now())
 
@@ -55,24 +55,24 @@ export default async function KartuPage({
 
       {cards.length === 0 && <p className="text-muted-foreground text-sm">Tidak ada siswa.</p>}
 
-      <div className="grid grid-cols-2 gap-2 print:grid-cols-2 print:gap-2">
+      <div className="grid grid-cols-2 gap-3 print:grid-cols-2 print:gap-3">
         {cards.map((card) => {
           const ruangan = [...new Set(card.sessions.map((s) => s.ruang))].join(" / ") || "-"
           return (
             <div
               key={card.studentId}
-              className="flex flex-col gap-1 border border-black p-1.5 text-[8.5px] leading-tight break-inside-avoid"
+              className="flex flex-col gap-1.5 border border-black p-2 text-[9.5px] leading-tight break-inside-avoid"
             >
               {/* Kop surat: logo - nama instansi - QR kecil */}
-              <div className="flex items-center gap-1 border-b border-black pb-1">
+              <div className="flex items-center gap-1.5 border-b border-black pb-1.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-sekolah.png" alt="" className="size-7 shrink-0 object-contain" />
+                <img src="/logo-sekolah.png" alt="" className="size-9 shrink-0 object-contain" />
                 <div className="flex-1 text-center">
-                  <p className="font-bold text-[7.5px] uppercase">{INSTANSI}</p>
-                  <p className="font-bold text-[9px]">{school?.nama ?? "-"}</p>
+                  <p className="font-bold text-[8.5px] uppercase">{INSTANSI}</p>
+                  <p className="font-bold text-[10.5px]">{school?.nama ?? "-"}</p>
                 </div>
                 <div
-                  className="size-7 shrink-0"
+                  className="size-9 shrink-0 overflow-hidden [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
                   dangerouslySetInnerHTML={{ __html: qrByStudent.get(card.studentId) ?? "" }}
                 />
               </div>
@@ -84,7 +84,7 @@ export default async function KartuPage({
               </div>
 
               {/* Data peserta */}
-              <div className="grid grid-cols-[62px_7px_1fr] gap-y-0.5">
+              <div className="grid grid-cols-[72px_8px_1fr] gap-y-1">
                 <span>Nama</span>
                 <span>:</span>
                 <span className="font-medium">{card.nama}</span>
