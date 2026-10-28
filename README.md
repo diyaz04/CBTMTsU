@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CBT MKKS
 
-## Getting Started
+Sistem Ujian Berbasis Komputer — Next.js (App Router) + shadcn/ui + Supabase + Vercel.
 
-First, run the development server:
+## Setup Lokal
 
 ```bash
+npm install
+cp .env.example .env.local   # isi dengan kredensial Supabase (lihat bagian Setup Supabase)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Buat project baru di [supabase.com/dashboard](https://supabase.com/dashboard).
+2. Buka **Project Settings > API**, salin:
+   - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
+   - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (rahasia, jangan pernah di-expose ke client)
+3. Tempel ke `.env.local`.
+4. Skema database (tabel + RLS policy) akan ditambahkan di Fase 1 sebagai migration SQL (`supabase/migrations/`).
 
-## Learn More
+## Setup Deploy ke Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push repo ini ke GitHub.
+2. Buka [vercel.com/new](https://vercel.com/new), import repo-nya.
+3. Di bagian **Environment Variables**, tambahkan 3 variabel yang sama seperti di `.env.local`
+   (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+4. Deploy — setiap push ke branch utama akan auto-deploy.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Struktur Modul
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/app/(auth)/login              → login (admin/guru/proktor/siswa)
+src/app/(dashboard)/siswa         → Fase 2: data & import siswa
+src/app/(dashboard)/bank-soal     → Fase 3: bank soal & import Word
+src/app/(dashboard)/ujian         → Fase 4: paket ujian & sesi
+src/app/(dashboard)/dokumen       → Fase 5: kartu ujian/akses & daftar hadir
+src/app/(dashboard)/monitoring    → Fase 7: monitoring real-time
+src/app/(exam)/ujian/[sessionId]  → Fase 6: pelaksanaan ujian (siswa)
+src/lib/supabase/                 → client, server, admin (service-role), middleware
+```
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js · TypeScript · Tailwind CSS · shadcn/ui (Base UI) · Supabase (DB, Auth, Storage, Realtime) · Vercel
