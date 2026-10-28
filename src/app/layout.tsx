@@ -14,8 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CBT MKKS",
-  description: "Sistem Ujian Berbasis Komputer",
+  title: {
+    default: "CBT MTs KH A Wahab Muhsin",
+    template: "%s · CBT MTs KH A Wahab Muhsin",
+  },
+  description: "Sistem Asesmen & Ujian Berbasis Komputer (CBT) Terintegrasi MTs KH A Wahab Muhsin - MKKS",
+  icons: {
+    icon: "/logo-sekolah.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -24,9 +30,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sans">
         {children}
-        <Toaster />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

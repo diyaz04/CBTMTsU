@@ -9,6 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Calendar,
+  Clock,
+  DoorOpen,
+  FileSpreadsheet,
+  FileText,
+  Printer,
+  QrCode,
+  Users,
+} from "lucide-react"
 
 function formatTanggal(tanggal: string) {
   return new Date(`${tanggal}T00:00:00`).toLocaleDateString("id-ID", {
@@ -53,60 +63,115 @@ export default async function DokumenPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-lg font-semibold">Dokumen</h1>
+      {/* Page Title */}
+      <div>
+        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+          Administrasi & Cetak Dokumen
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+          Pusat pencetakan kartu peserta, QR-Code login, serta berita acara daftar hadir ujian CBT.
+        </p>
+      </div>
 
-      <div className="flex flex-col gap-3 rounded-lg border p-4">
-        <div>
-          <p className="font-medium">Kartu Ujian & Akses</p>
-          <p className="text-muted-foreground text-sm">
-            Satu kartu per siswa, berisi jadwal semua sesi yang diikuti + username/password login.
-          </p>
+      {/* Card Section 1: Kartu Ujian & Akses */}
+      <div className="flex flex-col gap-5 rounded-3xl border border-border/80 bg-card p-6 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <QrCode className="size-6" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-foreground sm:text-lg">
+              Kartu Ujian & Kredensial Siswa
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+              Mencetak kartu resmi siswa lengkap dengan NISN, username, barcode QR-Code, password default, dan jadwal sesi ujian.
+            </p>
+          </div>
         </div>
-        <form action="/dokumen/kartu" method="get" className="flex items-end gap-2">
-          <div className="flex flex-col gap-2">
+
+        <form action="/dokumen/kartu" method="get" className="flex flex-wrap items-center gap-3 border-t border-border/60 pt-4">
+          <div className="w-full sm:w-60">
             <Select name="kelas">
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Semua kelas" />
+              <SelectTrigger className="h-11 rounded-xl">
+                <SelectValue placeholder="Pilih Rombel / Semua Kelas" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {kelasList.map((k) => (
                   <SelectItem key={k} value={k}>
-                    {k}
+                    Kelas {k}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit">Cetak Kartu</Button>
+          <Button type="submit" className="gap-2 h-11 rounded-xl bg-primary px-5 font-semibold text-xs text-primary-foreground shadow-sm hover:bg-primary/90">
+            <Printer className="size-4" />
+            Buka & Cetak Kartu Peserta
+          </Button>
         </form>
       </div>
 
-      <div className="flex flex-col gap-3">
+      {/* Card Section 2: Daftar Hadir Peserta */}
+      <div className="flex flex-col gap-4">
         <div>
-          <p className="font-medium">Daftar Hadir</p>
-          <p className="text-muted-foreground text-sm">Satu daftar hadir per sesi ujian.</p>
+          <h2 className="text-base font-bold text-foreground sm:text-lg">
+            Daftar Hadir Peserta Ujian
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Cetak formulir presensi tanda tangan peserta untuk setiap sesi ruangan ujian.
+          </p>
         </div>
-        {(sessionRows ?? []).length === 0 && (
-          <p className="text-muted-foreground text-sm">Belum ada sesi ujian terjadwal.</p>
-        )}
-        {[...sessionsByTanggal.entries()].map(([tanggal, sessions]) => (
-          <div key={tanggal} className="flex flex-col gap-2 rounded-lg border p-4">
-            <p className="text-sm font-medium">{formatTanggal(tanggal)}</p>
-            <div className="flex flex-col gap-1">
-              {(sessions ?? []).map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span>
-                    Sesi {s.sesi_ke} — {examNameById.get(s.exam_id) ?? s.mapel} · {s.ruang} ·{" "}
-                    {formatWaktu(s.waktu_mulai)}
-                  </span>
-                  <Link href={`/dokumen/daftar-hadir/${s.id}`} className="text-sm underline shrink-0">
-                    Cetak Daftar Hadir
-                  </Link>
-                </div>
-              ))}
-            </div>
+
+        {(sessionRows ?? []).length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-border/80 bg-card p-12 text-center shadow-xs">
+            <FileSpreadsheet className="size-8 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Belum ada sesi ujian terjadwal.</p>
           </div>
-        ))}
+        ) : (
+          [...sessionsByTanggal.entries()].map(([tanggal, sessions]) => (
+            <div key={tanggal} className="flex flex-col gap-3 rounded-3xl border border-border/80 bg-card p-5 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+                <Calendar className="size-4 text-primary" />
+                <span className="font-bold text-sm text-foreground">{formatTanggal(tanggal)}</span>
+              </div>
+
+              <div className="flex flex-col divide-y divide-border/60">
+                {(sessions ?? []).map((s) => (
+                  <div key={s.id} className="flex flex-col justify-between gap-3 py-3 sm:flex-row sm:items-center">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md bg-primary/10 px-2 py-0.2 font-mono text-xs font-bold text-primary">
+                          Sesi {s.sesi_ke}
+                        </span>
+                        <span className="font-semibold text-xs text-foreground">
+                          {examNameById.get(s.exam_id) ?? s.mapel}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <DoorOpen className="size-3" />
+                          Ruang {s.ruang}
+                        </span>
+                        <span>·</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {formatWaktu(s.waktu_mulai)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link href={`/dokumen/daftar-hadir/${s.id}`}>
+                      <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs font-semibold">
+                        <Printer className="size-3.5" />
+                        Cetak Presensi
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

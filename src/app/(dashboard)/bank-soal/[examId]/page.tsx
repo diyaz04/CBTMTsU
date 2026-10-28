@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ArrowLeft, BookOpen, FileText, Layers, Plus } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { AddGroupDialog } from "@/components/soal/add-group-dialog"
 import { ImportDocxDialog } from "@/components/soal/import-docx-dialog"
 import { GroupList } from "@/components/soal/group-list"
+import { Badge } from "@/components/ui/badge"
 import type { GroupRow, QuestionRow } from "@/lib/soal/types"
 
 export default async function BankSoalDetailPage({
@@ -83,23 +85,44 @@ export default async function BankSoalDetailPage({
     questionsByGroup[q.group_id] = list
   }
 
+  const totalQuestions = (questionRows ?? []).length
+
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Link href="/bank-soal" className="text-muted-foreground text-sm hover:underline">
-          ← Bank Soal
+    <div className="flex flex-col gap-6">
+      {/* Breadcrumb & Header */}
+      <div className="flex flex-col gap-4">
+        <Link
+          href="/bank-soal"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground w-fit"
+        >
+          <ArrowLeft className="size-3.5" />
+          Kembali ke Bank Soal
         </Link>
-        <div className="flex items-center justify-between">
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-lg font-semibold">{exam.nama_ujian}</h1>
-            <p className="text-muted-foreground text-sm">{exam.paket}</p>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                {exam.nama_ujian}
+              </h1>
+              <Badge variant="secondary" className="rounded-lg font-semibold text-xs px-2.5 py-0.5">
+                <Layers className="size-3 mr-1" />
+                Paket {exam.paket}
+              </Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              Total {groups.length} Grup Kompetensi · {totalQuestions} Butir Soal Terdaftar
+            </p>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex items-center gap-2.5">
             <ImportDocxDialog examId={exam.id} />
             <AddGroupDialog examId={exam.id} />
           </div>
         </div>
       </div>
+
+      {/* Groups & Questions List */}
       <GroupList examId={exam.id} groups={groups} questionsByGroup={questionsByGroup} />
     </div>
   )

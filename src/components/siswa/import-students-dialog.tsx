@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
+import { FileSpreadsheet } from "lucide-react"
 import { importStudents, type ImportSummary } from "@/lib/students/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,7 +26,10 @@ export function ImportStudentsDialog() {
         setOpen(next)
       }}
     >
-      <DialogTrigger render={<Button variant="outline" />}>Import Excel</DialogTrigger>
+      <DialogTrigger render={<Button variant="outline" className="rounded-xl shadow-xs" />}>
+        <FileSpreadsheet className="size-4" />
+        Import Excel
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Import Siswa dari Excel</DialogTitle>

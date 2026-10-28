@@ -1,8 +1,19 @@
 import Link from "next/link"
+import Image from "next/image"
 import { redirect } from "next/navigation"
+import {
+  ArrowRight,
+  CalendarCheck,
+  CheckCircle2,
+  Clock,
+  DoorOpen,
+  Hash,
+  LogOut,
+  Sparkles,
+  AlertCircle,
+} from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { logout } from "@/lib/auth/actions"
 import { now } from "@/lib/now"
@@ -57,71 +68,315 @@ export default async function BerandaPage() {
 
   const nowMs = now()
 
+  // Calculate summary counts
+  let activeExamsCount = 0
+  let completedExamsCount = 0
+
+  const processedSessions = (sessionRows ?? []).map((session) => {
+    const ss = sessionStudentBySession.get(session.id)
+    const attemptStatus = ss ? statusBySessionStudent.get(ss.id) : undefined
+    const start = new Date(session.waktu_mulai).getTime()
+    const end = start + session.durasi_menit * 60_000
+
+    let label: string
+    let canEnter = false
+    let statusTheme: "active" | "ongoing" | "done" | "upcoming" | "expired" = "upcoming"
+
+    if (attemptStatus === "submitted" || attemptStatus === "auto_submitted") {
+      label = "Selesai Dikerjakan"
+      statusTheme = "done"
+      completedExamsCount++
+    } else if (nowMs < start) {
+      label = "Belum Dimulai"
+      statusTheme = "upcoming"
+    } else if (nowMs > end && attemptStatus !== "in_progress") {
+      label = "Waktu Habis"
+      statusTheme = "expired"
+    } else {
+      label = attemptStatus === "in_progress" ? "Sedang Berlangsung" : "Bisa Dikerjakan"
+      statusTheme = attemptStatus === "in_progress" ? "ongoing" : "active"
+      canEnter = true
+      activeExamsCount++
+    }
+
+    return {
+      session,
+      ss,
+      attemptStatus,
+      label,
+      canEnter,
+      statusTheme,
+    }
+  })
+
+  const initials = user.nama
+    ? user.nama
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "SW"
+
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Halo, {user.nama}</h1>
-          <p className="text-muted-foreground text-sm">{user.kelas}</p>
-        </div>
-        <form action={logout}>
-          <Button type="submit" variant="outline" size="sm">
-            Keluar
-          </Button>
-        </form>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {(sessionRows ?? []).length === 0 && (
-          <p className="text-muted-foreground text-sm">Belum ada jadwal ujian buat kamu.</p>
-        )}
-        {(sessionRows ?? []).map((session) => {
-          const ss = sessionStudentBySession.get(session.id)
-          const attemptStatus = ss ? statusBySessionStudent.get(ss.id) : undefined
-          const start = new Date(session.waktu_mulai).getTime()
-          const end = start + session.durasi_menit * 60_000
-
-          let label: string
-          let canEnter = false
-          if (attemptStatus === "submitted" || attemptStatus === "auto_submitted") {
-            label = "Selesai"
-          } else if (nowMs < start) {
-            label = "Belum dimulai"
-          } else if (nowMs > end && attemptStatus !== "in_progress") {
-            label = "Waktu habis"
-          } else {
-            label = attemptStatus === "in_progress" ? "Sedang berlangsung" : "Bisa dikerjakan"
-            canEnter = true
-          }
-
-          return (
-            <div key={session.id} className="flex flex-col gap-2 rounded-lg border p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-medium">{examNameById.get(session.exam_id) ?? session.mapel}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {formatTanggal(session.tanggal)} · Sesi {session.sesi_ke} · {session.ruang}
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {formatWaktu(session.waktu_mulai)} ({session.durasi_menit} menit) · No. Peserta{" "}
-                    {ss?.no_peserta}
-                  </p>
-                </div>
-                <Badge variant={label === "Selesai" ? "secondary" : canEnter ? "default" : "outline"}>
-                  {label}
-                </Badge>
-              </div>
-              {canEnter && (
-                <Link href={`/kerjakan/${session.id}`}>
-                  <Button className="w-full">
-                    {attemptStatus === "in_progress" ? "Lanjutkan Ujian" : "Masuk Ujian"}
-                  </Button>
-                </Link>
-              )}
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-16">
+      {/* Top Navbar Siswa */}
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-card/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 p-1.5 ring-1 ring-primary/20">
+              <Image
+                src="/logo-sekolah.png"
+                alt="Logo MTs KH A Wahab Muhsin"
+                width={36}
+                height={36}
+                className="object-contain"
+              />
             </div>
-          )
-        })}
-      </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold tracking-tight text-foreground sm:text-base">
+                  CBT Siswa
+                </span>
+                <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  Online
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">MTs KH A Wahab Muhsin</p>
+            </div>
+          </div>
+
+          {/* Student Profile Pill & Logout */}
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2.5 rounded-full border border-border/80 bg-muted/50 px-3 py-1 sm:flex">
+              <div className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                {initials}
+              </div>
+              <div className="text-left">
+                <p className="max-w-[140px] truncate text-xs font-semibold leading-none">{user.nama}</p>
+                <p className="text-[10px] text-muted-foreground">{user.kelas}</p>
+              </div>
+            </div>
+
+            <form action={logout}>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl border-border/80 text-xs font-medium hover:bg-destructive/10 hover:text-destructive"
+                title="Keluar dari Portal"
+              >
+                <LogOut className="size-3.5" />
+                <span className="hidden sm:inline">Keluar</span>
+              </Button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 pt-6 sm:px-6">
+        {/* Welcome Greeting Banner */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-emerald-800 to-slate-900 p-6 text-white shadow-lg sm:p-8">
+          <div className="pointer-events-none absolute -top-12 -right-12 size-48 rounded-full bg-white/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 size-48 rounded-full bg-emerald-400/20 blur-3xl" />
+
+          <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-1.5">
+              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-emerald-200 backdrop-blur-md">
+                <Sparkles className="size-3.5" />
+                Semester Berjalan
+              </div>
+              <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+                Halo, {user.nama} 👋
+              </h1>
+              <p className="text-xs text-white/80 sm:text-sm">
+                Kelas <strong>{user.kelas}</strong> · Persiapkan diri dan baca doa sebelum memulai ujian.
+              </p>
+            </div>
+
+            {/* Quick Stats Pill */}
+            <div className="flex gap-3">
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/10 px-4 py-2.5 backdrop-blur-md">
+                <span className="text-xl font-extrabold text-white">{activeExamsCount}</span>
+                <span className="text-[11px] font-medium text-white/70">Ujian Aktif</span>
+              </div>
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/10 px-4 py-2.5 backdrop-blur-md">
+                <span className="text-xl font-extrabold text-white">{completedExamsCount}</span>
+                <span className="text-[11px] font-medium text-white/70">Selesai</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section Title */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-foreground">
+              Daftar Jadwal Ujian
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Jadwal sesi asesmen yang telah ditentukan untuk rombongan belajar Anda.
+            </p>
+          </div>
+          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+            {processedSessions.length} Sesi
+          </span>
+        </div>
+
+        {/* Exam Cards Grid */}
+        <div className="flex flex-col gap-4">
+          {processedSessions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-border/80 bg-card p-12 text-center shadow-xs">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                <CalendarCheck className="size-7" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">Belum Ada Jadwal Ujian</h3>
+              <p className="max-w-md text-xs text-muted-foreground">
+                Saat ini belum ada sesi ujian yang ditugaskan untuk akun kamu. Silakan hubungi proktor atau guru jika jadwal sudah diumumkan.
+              </p>
+            </div>
+          ) : (
+            processedSessions.map(
+              ({ session, ss, canEnter, statusTheme }) => {
+                const isReady = statusTheme === "active"
+                const isOngoing = statusTheme === "ongoing"
+                const isDone = statusTheme === "done"
+
+                return (
+                  <div
+                    key={session.id}
+                    className={`relative flex flex-col justify-between gap-5 overflow-hidden rounded-3xl border bg-card p-5 shadow-sm transition-all sm:p-6 ${
+                      isReady || isOngoing
+                        ? "border-primary/40 ring-2 ring-primary/10 shadow-md"
+                        : "border-border/80"
+                    }`}
+                  >
+                    {/* Top Row: Title & Badge */}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground">
+                            Sesi {session.sesi_ke}
+                          </span>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {session.mapel}
+                          </span>
+                        </div>
+                        <h3 className="text-base font-bold text-foreground sm:text-lg">
+                          {examNameById.get(session.exam_id) ?? session.mapel}
+                        </h3>
+                      </div>
+
+                      {/* Status Badges */}
+                      <div>
+                        {isReady && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
+                            Bisa Dikerjakan
+                          </span>
+                        )}
+                        {isOngoing && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+                            <span className="size-2 animate-ping rounded-full bg-amber-500" />
+                            Sedang Berlangsung
+                          </span>
+                        )}
+                        {isDone && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                            <CheckCircle2 className="size-3.5 text-emerald-500" />
+                            Selesai
+                          </span>
+                        )}
+                        {statusTheme === "upcoming" && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+                            <Clock className="size-3.5" />
+                            Belum Dimulai
+                          </span>
+                        )}
+                        {statusTheme === "expired" && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
+                            <AlertCircle className="size-3.5" />
+                            Waktu Habis
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Metadata Chips */}
+                    <div className="grid grid-cols-2 gap-3 rounded-2xl bg-muted/40 p-3 sm:grid-cols-4 sm:p-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-xs">
+                          <CalendarCheck className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Tanggal</p>
+                          <p className="truncate text-xs font-medium text-foreground">{formatTanggal(session.tanggal)}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-xs">
+                          <Clock className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Waktu & Durasi</p>
+                          <p className="truncate text-xs font-medium text-foreground">
+                            {formatWaktu(session.waktu_mulai)} ({session.durasi_menit}m)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-xs">
+                          <DoorOpen className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Ruangan</p>
+                          <p className="truncate text-xs font-medium text-foreground">{session.ruang}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-xs">
+                          <Hash className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">No. Peserta</p>
+                          <p className="truncate font-mono text-xs font-bold text-foreground">{ss?.no_peserta ?? "-"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    {canEnter ? (
+                      <Link href={`/kerjakan/${session.id}`} className="w-full">
+                        <Button
+                          className={`group h-12 w-full rounded-2xl text-sm font-semibold shadow-md transition-all hover:shadow-lg active:scale-[0.99] ${
+                            isOngoing
+                              ? "bg-amber-600 hover:bg-amber-700 text-white"
+                              : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                          }`}
+                        >
+                          <span className="flex items-center justify-center gap-2">
+                            {isOngoing ? "Lanjutkan Pengerjaan Ujian" : "Masuk Ujian Sekarang"}
+                            <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                          </span>
+                        </Button>
+                      </Link>
+                    ) : isDone ? (
+                      <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/60 py-3 text-xs font-medium text-muted-foreground">
+                        <CheckCircle2 className="size-4 text-emerald-500" />
+                        Jawaban ujian telah berhasil dikirimkan ke server.
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              }
+            )
+          )}
+        </div>
+      </main>
     </div>
   )
 }

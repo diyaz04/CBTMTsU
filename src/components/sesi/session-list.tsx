@@ -2,7 +2,23 @@
 
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { MoreHorizontal, RefreshCw, Users, X } from "lucide-react"
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Copy,
+  DoorOpen,
+  KeyRound,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+  UserMinus,
+  Users,
+} from "lucide-react"
 import { deleteSession, regenerateToken, removeSessionStudent } from "@/lib/sesi/actions"
 import type { SessionRow, SessionStudentRow } from "@/lib/sesi/types"
 import type { StudentRow } from "@/lib/students/types"
@@ -55,6 +71,7 @@ export function SessionList({
   const [deleting, setDeleting] = useState<SessionRow | null>(null)
   const [assigningTo, setAssigningTo] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function toggleExpand(id: string) {
@@ -72,7 +89,7 @@ export function SessionList({
     startTransition(async () => {
       const result = await deleteSession(session.id, examId)
       if (result?.error) toast.error(result.error)
-      else toast.success("Sesi dihapus.")
+      else toast.success("Sesi berhasil dihapus.")
       setDeleting(null)
     })
   }
@@ -81,101 +98,209 @@ export function SessionList({
     startTransition(async () => {
       const result = await regenerateToken(session.id, examId)
       if (result?.error) toast.error(result.error)
-      else toast.success("Token diperbarui.")
+      else toast.success("Token ujian berhasil diperbarui.")
     })
+  }
+
+  function copyToken(token: string) {
+    navigator.clipboard.writeText(token)
+    setCopiedToken(token)
+    toast.success("Token disalin ke clipboard")
+    setTimeout(() => setCopiedToken(null), 2000)
   }
 
   function handleRemoveStudent(sessionStudentId: string) {
     startTransition(async () => {
       const result = await removeSessionStudent(sessionStudentId, examId)
       if (result?.error) toast.error(result.error)
-      else toast.success("Siswa dikeluarkan dari sesi.")
+      else toast.success("Siswa dikeluarkan dari sesi ujian.")
     })
   }
 
   if (sessions.length === 0) {
-    return <p className="text-muted-foreground text-sm">Belum ada sesi untuk ujian ini.</p>
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-border/80 bg-card p-12 text-center shadow-xs">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Clock className="size-7" />
+        </div>
+        <h3 className="text-base font-semibold text-foreground">Belum Ada Sesi Pelaksanaan</h3>
+        <p className="max-w-sm text-xs text-muted-foreground">
+          Klik tombol &quot;Tambah Sesi&quot; di atas untuk menentukan jadwal waktu, ruangan, dan peserta ujian.
+        </p>
+      </div>
+    )
   }
 
   return (
     <>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {sessions.map((session) => {
           const participants = participantsBySession[session.id] ?? []
           const isExpanded = expanded.has(session.id)
+
           return (
-            <div key={session.id} className="flex flex-col gap-3 rounded-lg border p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-medium">
-                    {session.mapel} — Sesi {session.sesiKe}
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {formatTanggal(session.tanggal)} · {session.ruang} · {formatWaktu(session.waktuMulai)} (
-                    {session.durasiMenit} menit)
-                  </p>
+            <div
+              key={session.id}
+              className="flex flex-col gap-4 rounded-3xl border border-border/80 bg-card p-5 shadow-sm transition-all sm:p-6"
+            >
+              {/* Session Top Info */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-bold text-primary">
+                      Sesi {session.sesiKe}
+                    </span>
+                    <h3 className="text-base font-bold text-foreground sm:text-lg">
+                      {session.mapel}
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="size-3.5 text-primary" />
+                      {formatTanggal(session.tanggal)}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="size-3.5 text-primary" />
+                      {formatWaktu(session.waktuMulai)} ({session.durasiMenit} menit)
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <DoorOpen className="size-3.5 text-primary" />
+                      Ruangan: {session.ruang}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Token {session.token}</Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    title="Buat token baru"
-                    onClick={() => handleRegenerateToken(session)}
-                    disabled={isPending}
-                  >
-                    <RefreshCw className="size-4" />
-                  </Button>
+
+                {/* Token & Actions Header */}
+                <div className="flex items-center gap-2.5">
+                  {/* Token Pill */}
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-1.5 shadow-xs">
+                    <KeyRound className="size-4 text-primary" />
+                    <span className="font-mono text-xs font-bold tracking-wider text-primary">
+                      {session.token}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToken(session.token)}
+                      title="Salin token"
+                      className="ml-1 rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    >
+                      {copiedToken === session.token ? (
+                        <Check className="size-3.5 text-emerald-500" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      title="Acak / Regenerate Token Baru"
+                      onClick={() => handleRegenerateToken(session)}
+                      disabled={isPending}
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                    >
+                      <RefreshCw className={`size-3.5 ${isPending ? "animate-spin" : ""}`} />
+                    </button>
+                  </div>
+
+                  {/* Menu Options */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-xl" />}>
                       <MoreHorizontal className="size-4" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => setEditing(session)}>Edit</DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(session)}>
-                        Hapus
+                    <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg">
+                      <DropdownMenuItem
+                        onSelect={() => setEditing(session)}
+                        className="flex items-center gap-2 text-xs font-medium"
+                      >
+                        <Pencil className="size-3.5 text-muted-foreground" />
+                        Edit Sesi
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={() => setDeleting(session)}
+                        className="flex items-center gap-2 text-xs font-medium text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Hapus Sesi
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              {/* Participant Bar & Toggle Drawer */}
+              <div className="flex items-center justify-between border-t border-border/60 pt-3">
                 <button
                   type="button"
                   onClick={() => toggleExpand(session.id)}
-                  className="text-muted-foreground flex items-center gap-1.5 text-sm hover:text-foreground"
+                  className="flex items-center gap-2 rounded-xl px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
                 >
-                  <Users className="size-4" />
-                  {participants.length} peserta {isExpanded ? "▲" : "▼"}
+                  <Users className="size-4 text-primary" />
+                  <span>{participants.length} Siswa Terdaftar</span>
+                  {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                 </button>
-                <Button variant="outline" size="sm" onClick={() => setAssigningTo(session.id)}>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAssigningTo(session.id)}
+                  className="gap-1.5 rounded-xl text-xs font-semibold"
+                >
+                  <Plus className="size-3.5" />
                   Tambah Peserta
                 </Button>
               </div>
 
+              {/* Expandable Participants Table */}
               {isExpanded && (
-                <div className="flex flex-col gap-1 rounded border p-2">
-                  {participants.length === 0 && (
-                    <p className="text-muted-foreground p-2 text-sm">Belum ada peserta.</p>
-                  )}
-                  {participants.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between gap-2 px-2 py-1 text-sm">
-                      <span className="text-muted-foreground w-10">{p.noPeserta}</span>
-                      <span className="flex-1">{p.nama}</span>
-                      <span className="text-muted-foreground">
-                        {p.nisn} · {p.kelas}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={isPending}
-                        onClick={() => handleRemoveStudent(p.id)}
-                      >
-                        <X className="size-4" />
-                      </Button>
+                <div className="overflow-hidden rounded-2xl border border-border/80 bg-muted/20">
+                  {participants.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-muted-foreground">
+                      Belum ada siswa yang ditugaskan ke sesi ini. Klik &quot;Tambah Peserta&quot; untuk memilih siswa.
                     </div>
-                  ))}
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/60 text-muted-foreground sticky top-0 backdrop-blur-xs">
+                          <tr className="border-b border-border/60 text-left">
+                            <th className="py-2.5 px-4 font-bold">NO. PESERTA</th>
+                            <th className="py-2.5 px-4 font-bold">NAMA SISWA</th>
+                            <th className="py-2.5 px-4 font-bold">KELAS</th>
+                            <th className="py-2.5 px-4 font-bold">NISN</th>
+                            <th className="py-2.5 px-4 text-right font-bold w-16" />
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/60 bg-card">
+                          {participants.map((p) => (
+                            <tr key={p.id} className="transition-colors hover:bg-muted/30">
+                              <td className="py-2.5 px-4 font-mono font-bold text-foreground">
+                                {p.noPeserta}
+                              </td>
+                              <td className="py-2.5 px-4 font-medium text-foreground">{p.nama}</td>
+                              <td className="py-2.5 px-4">
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {p.kelas}
+                                </Badge>
+                              </td>
+                              <td className="py-2.5 px-4 font-mono text-muted-foreground">{p.nisn}</td>
+                              <td className="py-2.5 px-4 text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  disabled={isPending}
+                                  onClick={() => handleRemoveStudent(p.id)}
+                                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg"
+                                  title="Keluarkan siswa dari sesi ini"
+                                >
+                                  <UserMinus className="size-3.5" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -185,28 +310,35 @@ export function SessionList({
 
       <EditSessionDialog session={editing} onOpenChange={(open) => !open && setEditing(null)} />
 
-      <AssignStudentsDialog
-        examId={examId}
-        sessionId={assigningTo}
-        allStudents={allStudents}
-        assignedStudentIds={new Set((participantsBySession[assigningTo ?? ""] ?? []).map((p) => p.studentId))}
-        open={!!assigningTo}
-        onOpenChange={(open) => !open && setAssigningTo(null)}
-      />
+      {assigningTo && (
+        <AssignStudentsDialog
+          sessionId={assigningTo}
+          examId={examId}
+          allStudents={allStudents}
+          assignedStudentIds={new Set(
+            (participantsBySession[assigningTo] ?? []).map((p) => p.studentId)
+          )}
+          open={!!assigningTo}
+          onOpenChange={(open) => !open && setAssigningTo(null)}
+        />
+      )}
 
       <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus sesi ini?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Sesi {deleting?.sesiKe} ({deleting?.mapel})?</AlertDialogTitle>
             <AlertDialogDescription>
-              Seluruh peserta yang terdaftar di sesi ini akan ikut terhapus. Tindakan ini tidak bisa
-              dibatalkan.
+              Seluruh penugasan peserta dan riwayat pengerjaan di sesi ini akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction disabled={isPending} onClick={handleDelete}>
-              Hapus
+            <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={handleDelete}
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Hapus Sesi
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

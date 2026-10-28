@@ -1,8 +1,10 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ArrowLeft, CalendarCheck2, Clock, DoorOpen, Layers, Users } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { AddSessionDialog } from "@/components/sesi/add-session-dialog"
 import { SessionList } from "@/components/sesi/session-list"
+import { Badge } from "@/components/ui/badge"
 import type { SessionRow, SessionStudentRow } from "@/lib/sesi/types"
 import type { StudentRow } from "@/lib/students/types"
 
@@ -83,19 +85,38 @@ export default async function UjianDetailPage({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Link href="/ujian" className="text-muted-foreground text-sm hover:underline">
-          ← Ujian & Sesi
+    <div className="flex flex-col gap-6">
+      {/* Breadcrumb & Header */}
+      <div className="flex flex-col gap-4">
+        <Link
+          href="/ujian"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground w-fit"
+        >
+          <ArrowLeft className="size-3.5" />
+          Kembali ke Jadwal Ujian
         </Link>
-        <div className="flex items-center justify-between">
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-lg font-semibold">{exam.nama_ujian}</h1>
-            <p className="text-muted-foreground text-sm">{exam.paket}</p>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                {exam.nama_ujian}
+              </h1>
+              <Badge variant="secondary" className="rounded-lg font-semibold text-xs px-2.5 py-0.5">
+                <Layers className="size-3 mr-1" />
+                Paket {exam.paket}
+              </Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              Kelola sesi waktu, ruangan, generate token, dan penugasan nomor peserta ujian.
+            </p>
           </div>
+
           <AddSessionDialog examId={exam.id} defaultMapel={exam.nama_ujian} />
         </div>
       </div>
+
+      {/* Session List */}
       <SessionList
         examId={exam.id}
         sessions={sessions}

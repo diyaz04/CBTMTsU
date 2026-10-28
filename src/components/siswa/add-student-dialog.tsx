@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
+import { UserPlus } from "lucide-react"
 import { createStudent } from "@/lib/students/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,7 +48,10 @@ export function AddStudentDialog() {
         if (next) setError(null)
       }}
     >
-      <DialogTrigger render={<Button />}>Tambah Siswa</DialogTrigger>
+      <DialogTrigger render={<Button className="rounded-xl shadow-sm" />}>
+        <UserPlus className="size-4" />
+        Tambah Siswa
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tambah Siswa</DialogTitle>

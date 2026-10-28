@@ -1,4 +1,6 @@
 import QRCode from "qrcode"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { getStudentCards } from "@/lib/dokumen/service"
@@ -36,7 +38,15 @@ export default async function KartuPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between print:hidden">
-        <h1 className="text-lg font-semibold">Kartu Ujian & Akses{kelas ? ` — ${kelas}` : ""}</h1>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dokumen"
+            className="flex size-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <h1 className="text-lg font-bold">Kartu Ujian & Akses{kelas ? ` — ${kelas}` : ""}</h1>
+        </div>
         <PrintButton />
       </div>
 

@@ -1,4 +1,6 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { getSessionAttendance, getSessionInfo } from "@/lib/dokumen/service"
@@ -38,7 +40,15 @@ export default async function DaftarHadirPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between print:hidden">
-        <h1 className="text-lg font-semibold">Daftar Hadir</h1>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dokumen"
+            className="flex size-8 items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <h1 className="text-lg font-bold">Daftar Hadir Peserta</h1>
+        </div>
         <PrintButton />
       </div>
 

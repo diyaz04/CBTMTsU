@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
+import { Plus } from "lucide-react"
 import { createSession } from "@/lib/sesi/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,10 @@ export function AddSessionDialog({ examId, defaultMapel }: { examId: string; def
         if (next) setError(null)
       }}
     >
-      <DialogTrigger render={<Button />}>Tambah Sesi</DialogTrigger>
+      <DialogTrigger render={<Button className="gap-2 rounded-xl shadow-sm" />}>
+        <Plus className="size-4" />
+        Tambah Sesi
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tambah Sesi Ujian</DialogTitle>
