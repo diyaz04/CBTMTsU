@@ -138,7 +138,12 @@ export function QuestionFormDialog({
               <Label>Grup Soal</Label>
               <Select value={groupId} onValueChange={(v) => setGroupId(v as string)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih grup" />
+                  <SelectValue placeholder="Pilih grup">
+                    {(value: string) => {
+                      const g = groups.find((item) => item.id === value)
+                      return g ? `${g.kodeGrup} — ${g.namaGrup}` : "Pilih grup"
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {groups.map((g) => (
@@ -153,7 +158,9 @@ export function QuestionFormDialog({
               <Label>Tipe Soal</Label>
               <Select value={tipeSoal} onValueChange={(v) => setTipeSoal(v as TipeSoal)} disabled={isEdit}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {(value: TipeSoal) => (value === "multiple-choice" ? "Pilihan Ganda" : "Essay")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="multiple-choice">Pilihan Ganda</SelectItem>
@@ -173,7 +180,7 @@ export function QuestionFormDialog({
               <Label>Mode Koreksi</Label>
               <Select value={modeKoreksi} onValueChange={(v) => setModeKoreksi(v as ModeKoreksi)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>{(value: ModeKoreksi) => (value === "A" ? "Otomatis" : "Manual")}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="A">Otomatis</SelectItem>
