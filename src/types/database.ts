@@ -158,7 +158,7 @@ export interface Database {
           sesi_ke: number
           ruang: string
           mapel: string
-          token: string
+          token: string | null
           waktu_mulai: string
           durasi_menit: number
           created_at: string
@@ -170,7 +170,7 @@ export interface Database {
           sesi_ke: number
           ruang: string
           mapel: string
-          token: string
+          token?: string | null
           waktu_mulai: string
           durasi_menit: number
           created_at?: string

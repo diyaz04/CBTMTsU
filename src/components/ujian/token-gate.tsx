@@ -57,7 +57,7 @@ export function TokenGate({ sessionId }: { sessionId: string }) {
               Masukkan Token Ujian
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground sm:text-sm">
-              Token verifikasi terdapat pada kartu peserta atau diumumkan oleh pengawas ruangan.
+              Lihat kode terbaru di layar/papan ruang ujian — token ganti otomatis tiap 5 menit.
             </CardDescription>
           </CardHeader>
 

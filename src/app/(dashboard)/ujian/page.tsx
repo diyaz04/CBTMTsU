@@ -34,7 +34,7 @@ export default async function UjianPage() {
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-          Pilih master ujian untuk mengatur tanggal, ruangan, durasi waktu, token akses, dan penugasan peserta.
+          Pilih master ujian untuk mengatur tanggal, ruangan, durasi waktu, dan penugasan peserta.
         </p>
       </div>
 

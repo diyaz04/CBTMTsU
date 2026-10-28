@@ -8,6 +8,7 @@ import {
   CalendarCheck2,
   FileSpreadsheet,
   GraduationCap,
+  KeyRound,
   Radio,
 } from "lucide-react"
 import { cn } from "cn"
@@ -40,6 +41,7 @@ const NAV_GROUPS: { group: string; items: NavItem[] }[] = [
     items: [
       { href: "/penilaian", label: "Penilaian & Hasil", icon: Award },
       { href: "/monitoring", label: "Monitoring Live", icon: Radio, isLive: true },
+      { href: "/token-live", label: "Token Akses Live", icon: KeyRound, isLive: true },
     ],
   },
 ]

@@ -4,22 +4,18 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import {
   Calendar,
-  Check,
   ChevronDown,
   ChevronUp,
   Clock,
-  Copy,
   DoorOpen,
-  KeyRound,
   MoreHorizontal,
   Pencil,
   Plus,
-  RefreshCw,
   Trash2,
   UserMinus,
   Users,
 } from "lucide-react"
-import { deleteSession, regenerateToken, removeSessionStudent } from "@/lib/sesi/actions"
+import { deleteSession, removeSessionStudent } from "@/lib/sesi/actions"
 import type { SessionRow, SessionStudentRow } from "@/lib/sesi/types"
 import type { StudentRow } from "@/lib/students/types"
 import { Badge } from "@/components/ui/badge"
@@ -71,7 +67,6 @@ export function SessionList({
   const [deleting, setDeleting] = useState<SessionRow | null>(null)
   const [assigningTo, setAssigningTo] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const [copiedToken, setCopiedToken] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function toggleExpand(id: string) {
@@ -92,21 +87,6 @@ export function SessionList({
       else toast.success("Sesi berhasil dihapus.")
       setDeleting(null)
     })
-  }
-
-  function handleRegenerateToken(session: SessionRow) {
-    startTransition(async () => {
-      const result = await regenerateToken(session.id, examId)
-      if (result?.error) toast.error(result.error)
-      else toast.success("Token ujian berhasil diperbarui.")
-    })
-  }
-
-  function copyToken(token: string) {
-    navigator.clipboard.writeText(token)
-    setCopiedToken(token)
-    toast.success("Token disalin ke clipboard")
-    setTimeout(() => setCopiedToken(null), 2000)
   }
 
   function handleRemoveStudent(sessionStudentId: string) {
@@ -171,37 +151,8 @@ export function SessionList({
                   </div>
                 </div>
 
-                {/* Token & Actions Header */}
+                {/* Actions Header */}
                 <div className="flex items-center gap-2.5">
-                  {/* Token Pill */}
-                  <div className="flex items-center gap-1.5 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-1.5 shadow-xs">
-                    <KeyRound className="size-4 text-primary" />
-                    <span className="font-mono text-xs font-bold tracking-wider text-primary">
-                      {session.token}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => copyToken(session.token)}
-                      title="Salin token"
-                      className="ml-1 rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                    >
-                      {copiedToken === session.token ? (
-                        <Check className="size-3.5 text-emerald-500" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      title="Acak / Regenerate Token Baru"
-                      onClick={() => handleRegenerateToken(session)}
-                      disabled={isPending}
-                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                    >
-                      <RefreshCw className={`size-3.5 ${isPending ? "animate-spin" : ""}`} />
-                    </button>
-                  </div>
-
                   {/* Menu Options */}
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-xl" />}>

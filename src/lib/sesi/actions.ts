@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache"
 import { requireSesiAccess } from "@/lib/sesi/require-access"
-import { generateSessionToken } from "@/lib/sesi/token"
 
 type ActionState = { error?: string; success?: string } | null
 
@@ -27,7 +26,6 @@ export async function createSession(_prevState: ActionState, formData: FormData)
     sesi_ke: sesiKe,
     ruang,
     mapel,
-    token: generateSessionToken(),
     waktu_mulai: new Date(waktuMulai).toISOString(),
     durasi_menit: durasiMenit,
   })
@@ -77,15 +75,6 @@ export async function deleteSession(id: string, examId: string) {
 
   revalidatePath(`/ujian/${examId}`)
   return { success: "Sesi berhasil dihapus." }
-}
-
-export async function regenerateToken(id: string, examId: string) {
-  const { supabase } = await requireSesiAccess()
-  const { error } = await supabase.from("exam_sessions").update({ token: generateSessionToken() }).eq("id", id)
-  if (error) return { error: error.message }
-
-  revalidatePath(`/ujian/${examId}`)
-  return { success: "Token berhasil diperbarui." }
 }
 
 export async function assignStudents(sessionId: string, examId: string, studentIds: string[]) {

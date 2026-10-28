@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { requireStudentAccess } from "@/lib/ujian/require-access"
+import { isValidGlobalToken } from "@/lib/ujian/global-token"
 import type { AttemptData, RunnerQuestion } from "@/lib/ujian/types"
 
 function shuffle<T>(arr: T[]): T[] {
@@ -30,12 +31,12 @@ export async function startAttempt(sessionId: string, token: string): Promise<St
 
   const { data: session } = await admin
     .from("exam_sessions")
-    .select("id, exam_id, token, waktu_mulai, durasi_menit")
+    .select("id, exam_id, waktu_mulai, durasi_menit")
     .eq("id", sessionId)
     .maybeSingle()
   if (!session) return { error: "Sesi ujian tidak ditemukan." }
 
-  if (token.trim().toUpperCase() !== session.token) return { error: "Token salah." }
+  if (!isValidGlobalToken(token)) return { error: "Token salah atau sudah kedaluwarsa, minta kode terbaru ke pengawas." }
 
   const now = Date.now()
   const start = new Date(session.waktu_mulai).getTime()

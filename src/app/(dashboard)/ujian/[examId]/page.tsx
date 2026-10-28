@@ -25,7 +25,7 @@ export default async function UjianDetailPage({
 
   const { data: sessionRows } = await supabase
     .from("exam_sessions")
-    .select("id, exam_id, tanggal, sesi_ke, ruang, mapel, token, waktu_mulai, durasi_menit")
+    .select("id, exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit")
     .eq("exam_id", examId)
     .order("tanggal")
     .order("sesi_ke")
@@ -37,7 +37,6 @@ export default async function UjianDetailPage({
     sesiKe: s.sesi_ke,
     ruang: s.ruang,
     mapel: s.mapel,
-    token: s.token,
     waktuMulai: s.waktu_mulai,
     durasiMenit: s.durasi_menit,
   }))
@@ -108,7 +107,8 @@ export default async function UjianDetailPage({
               </Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Kelola sesi waktu, ruangan, generate token, dan penugasan nomor peserta ujian.
+              Kelola sesi waktu, ruangan, dan penugasan nomor peserta ujian. Token akses sekarang
+              global &amp; ganti otomatis tiap 5 menit, lihat di menu Token Akses Live.
             </p>
           </div>
 

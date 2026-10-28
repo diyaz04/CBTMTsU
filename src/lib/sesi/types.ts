@@ -5,7 +5,6 @@ export interface SessionRow {
   sesiKe: number
   ruang: string
   mapel: string
-  token: string
   waktuMulai: string
   durasiMenit: number
 }
