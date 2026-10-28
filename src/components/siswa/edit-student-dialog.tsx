@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { updateStudent } from "@/lib/students/actions"
 import type { StudentRow } from "@/lib/students/types"
@@ -16,23 +16,36 @@ export function EditStudentDialog({
   student: StudentRow | null
   onOpenChange: (open: boolean) => void
 }) {
-  const [state, formAction, pending] = useActionState(updateStudent, null)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
 
-  useEffect(() => {
-    if (state?.success) {
-      toast.success(state.success)
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const result = await updateStudent(null, formData)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      setError(null)
+      toast.success(result?.success ?? "Data siswa berhasil diperbarui.")
       onOpenChange(false)
-    }
-  }, [state, onOpenChange])
+    })
+  }
 
   return (
-    <Dialog open={!!student} onOpenChange={onOpenChange}>
+    <Dialog
+      open={!!student}
+      onOpenChange={(next) => {
+        onOpenChange(next)
+        if (next) setError(null)
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Siswa</DialogTitle>
         </DialogHeader>
         {student && (
-          <form action={formAction} key={student.id} className="flex flex-col gap-4">
+          <form action={handleSubmit} key={student.id} className="flex flex-col gap-4">
             <input type="hidden" name="id" value={student.id} />
             <div className="flex flex-col gap-2">
               <Label>NISN</Label>
@@ -50,7 +63,7 @@ export function EditStudentDialog({
               <Label htmlFor="edit-username">Username</Label>
               <Input id="edit-username" name="username" defaultValue={student.username} required />
             </div>
-            {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" disabled={pending}>
                 {pending ? "Menyimpan..." : "Simpan"}

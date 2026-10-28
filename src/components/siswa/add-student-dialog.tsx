@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { createStudent } from "@/lib/students/actions"
 import { Button } from "@/components/ui/button"
@@ -20,26 +20,39 @@ export function AddStudentDialog() {
   const [usernameTouched, setUsernameTouched] = useState(false)
   const [nisn, setNisn] = useState("")
   const [username, setUsername] = useState("")
-  const [state, formAction, pending] = useActionState(createStudent, null)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
 
-  useEffect(() => {
-    if (state?.success) {
-      toast.success(state.success)
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const result = await createStudent(null, formData)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
+      setError(null)
+      toast.success(result?.success ?? "Siswa berhasil ditambahkan.")
       setOpen(false)
       setNisn("")
       setUsername("")
       setUsernameTouched(false)
-    }
-  }, [state])
+    })
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (next) setError(null)
+      }}
+    >
       <DialogTrigger render={<Button />}>Tambah Siswa</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tambah Siswa</DialogTitle>
         </DialogHeader>
-        <form action={formAction} className="flex flex-col gap-4">
+        <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="add-nisn">NISN</Label>
             <Input
@@ -78,7 +91,7 @@ export function AddStudentDialog() {
             <Label htmlFor="add-password">Password</Label>
             <Input id="add-password" name="password" required />
           </div>
-          {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={pending}>
               {pending ? "Menyimpan..." : "Simpan"}
