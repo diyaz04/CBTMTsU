@@ -253,7 +253,10 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
             </div>
 
             {/* Question Text */}
-            <div className="text-base sm:text-lg leading-relaxed text-foreground font-normal whitespace-pre-wrap select-none">
+            <div
+              dir="auto"
+              className="text-base sm:text-lg leading-relaxed text-foreground font-normal whitespace-pre-wrap select-none"
+            >
               {question.konten}
             </div>
 
@@ -301,7 +304,7 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
                           <RadioGroupItem value={opt.id} className="sr-only" />
                         </div>
 
-                        <span className="text-sm sm:text-base leading-relaxed text-foreground pt-0.5">
+                        <span dir="auto" className="text-sm sm:text-base leading-relaxed text-foreground pt-0.5">
                           {opt.teks}
                         </span>
                       </label>
@@ -311,6 +314,7 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
               ) : (
                 <div className="flex flex-col gap-2">
                   <Textarea
+                    dir="auto"
                     rows={8}
                     value={answers[question.id]?.essayText ?? ""}
                     onChange={(e) => updateEssay(e.target.value)}

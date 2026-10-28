@@ -43,6 +43,11 @@ export async function startAttempt(sessionId: string, token: string): Promise<St
   const end = start + session.durasi_menit * 60_000
   if (now < start) return { error: "Sesi ujian belum dimulai." }
 
+  await admin
+    .from("session_students")
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq("id", sessionStudent.id)
+
   const { data: existing } = await supabase
     .from("exam_attempts")
     .select("id, status")

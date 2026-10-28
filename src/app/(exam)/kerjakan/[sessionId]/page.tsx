@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { createClient } from "@/lib/supabase/server"
 import { getAttemptData } from "@/lib/ujian/actions"
-import { TokenGate } from "@/components/ujian/token-gate"
+import { ExamIdentityGate } from "@/components/ujian/exam-identity-gate"
 import { ExamRunner } from "@/components/ujian/exam-runner"
 
 export default async function KerjakanPage({
@@ -19,7 +19,7 @@ export default async function KerjakanPage({
 
   const { data: sessionStudent } = await supabase
     .from("session_students")
-    .select("id")
+    .select("id, no_peserta")
     .eq("session_id", sessionId)
     .eq("student_id", user.id)
     .maybeSingle()
@@ -43,7 +43,43 @@ export default async function KerjakanPage({
   }
 
   if (!attempt || attempt.status === "not_started") {
-    return <TokenGate sessionId={sessionId} />
+    const { data: student } = await supabase
+      .from("students")
+      .select("nama, kelas, nisn")
+      .eq("id", user.id)
+      .maybeSingle()
+    const { data: session } = await supabase
+      .from("exam_sessions")
+      .select("exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit")
+      .eq("id", sessionId)
+      .maybeSingle()
+    if (!student || !session) notFound()
+    const { data: exam } = await supabase
+      .from("exams")
+      .select("nama_ujian")
+      .eq("id", session.exam_id)
+      .maybeSingle()
+
+    return (
+      <ExamIdentityGate
+        sessionId={sessionId}
+        student={{
+          nama: student.nama,
+          kelas: student.kelas,
+          nisn: student.nisn,
+          noPeserta: sessionStudent.no_peserta,
+        }}
+        schedule={{
+          namaUjian: exam?.nama_ujian ?? session.mapel,
+          mapel: session.mapel,
+          sesiKe: session.sesi_ke,
+          ruang: session.ruang,
+          tanggal: session.tanggal,
+          waktuMulai: session.waktu_mulai,
+          durasiMenit: session.durasi_menit,
+        }}
+      />
+    )
   }
 
   const data = await getAttemptData(attempt.id)

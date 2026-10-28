@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function TokenGate({ sessionId }: { sessionId: string }) {
+export function TokenGate({ sessionId, onBack }: { sessionId: string; onBack?: () => void }) {
   const router = useRouter()
   const [token, setToken] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -106,7 +106,17 @@ export function TokenGate({ sessionId }: { sessionId: string }) {
                 )}
               </Button>
 
-              <div className="border-t border-border/60 pt-4 text-center">
+              <div className="flex flex-col items-center gap-2 border-t border-border/60 pt-4 text-center">
+                {onBack && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    Cek Ulang Identitas
+                  </button>
+                )}
                 <Link
                   href="/beranda"
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"

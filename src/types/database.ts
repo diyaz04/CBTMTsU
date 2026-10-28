@@ -184,12 +184,14 @@ export interface Database {
           session_id: string
           student_id: string
           no_peserta: string
+          last_seen_at: string | null
         }
         Insert: {
           id?: string
           session_id: string
           student_id: string
           no_peserta: string
+          last_seen_at?: string | null
         }
         Update: Partial<Database["public"]["Tables"]["session_students"]["Insert"]>
         Relationships: []
