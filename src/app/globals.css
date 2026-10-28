@@ -144,3 +144,10 @@
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.6 0.02 240 / 60%);
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}
