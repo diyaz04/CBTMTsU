@@ -209,7 +209,7 @@ export function SessionList({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg">
                       <DropdownMenuItem
-                        onSelect={() => setEditing(session)}
+                        onClick={() => setEditing(session)}
                         className="flex items-center gap-2 text-xs font-medium"
                       >
                         <Pencil className="size-3.5 text-muted-foreground" />
@@ -217,7 +217,7 @@ export function SessionList({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         variant="destructive"
-                        onSelect={() => setDeleting(session)}
+                        onClick={() => setDeleting(session)}
                         className="flex items-center gap-2 text-xs font-medium text-destructive"
                       >
                         <Trash2 className="size-3.5" />

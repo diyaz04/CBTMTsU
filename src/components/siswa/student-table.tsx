@@ -215,14 +215,14 @@ export function StudentTable({ students }: { students: StudentRow[] }) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44 rounded-xl shadow-lg">
                           <DropdownMenuItem
-                            onSelect={() => setEditing(s)}
+                            onClick={() => setEditing(s)}
                             className="flex items-center gap-2 text-xs font-medium"
                           >
                             <Pencil className="size-3.5 text-muted-foreground" />
                             Edit Profil
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => setResetting(s)}
+                            onClick={() => setResetting(s)}
                             className="flex items-center gap-2 text-xs font-medium"
                           >
                             <KeyRound className="size-3.5 text-amber-500" />
@@ -230,7 +230,7 @@ export function StudentTable({ students }: { students: StudentRow[] }) {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             variant="destructive"
-                            onSelect={() => setDeleting(s)}
+                            onClick={() => setDeleting(s)}
                             className="flex items-center gap-2 text-xs font-medium text-destructive"
                           >
                             <Trash2 className="size-3.5" />

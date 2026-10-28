@@ -97,7 +97,7 @@ export function ExamList({ exams }: { exams: ExamRow[] }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg">
                   <DropdownMenuItem
-                    onSelect={() => setEditing(exam)}
+                    onClick={() => setEditing(exam)}
                     className="flex items-center gap-2 text-xs font-medium"
                   >
                     <Pencil className="size-3.5 text-muted-foreground" />
@@ -105,7 +105,7 @@ export function ExamList({ exams }: { exams: ExamRow[] }) {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     variant="destructive"
-                    onSelect={() => setDeleting(exam)}
+                    onClick={() => setDeleting(exam)}
                     className="flex items-center gap-2 text-xs font-medium text-destructive"
                   >
                     <Trash2 className="size-3.5" />
