@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { logout } from "@/lib/auth/actions"
 import { Button } from "@/components/ui/button"
+import { SidebarNav } from "@/components/dashboard/sidebar-nav"
 
 export default async function DashboardLayout({
   children,
@@ -15,7 +16,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen">
       <aside className="w-56 border-r p-4 flex flex-col gap-4 print:hidden">
         <p className="text-sm font-semibold">CBT MKKS</p>
-        {/* TODO: sidebar nav per role — Fase 2+ (menu beda tiap role) */}
+        <SidebarNav />
         <div className="mt-auto flex flex-col gap-2">
           <p className="text-muted-foreground text-xs">
             {user.nama} · {user.role}

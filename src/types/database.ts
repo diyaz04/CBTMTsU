@@ -223,6 +223,7 @@ export interface Database {
           question_id: string
           selected_option_id: string | null
           essay_text: string | null
+          skor: number | null
           updated_at: string
         }
         Insert: {
@@ -231,6 +232,7 @@ export interface Database {
           question_id: string
           selected_option_id?: string | null
           essay_text?: string | null
+          skor?: number | null
           updated_at?: string
         }
         Update: Partial<Database["public"]["Tables"]["answers"]["Insert"]>
