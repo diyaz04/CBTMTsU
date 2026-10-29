@@ -3,6 +3,7 @@ import Image from "next/image"
 import { redirect } from "next/navigation"
 import {
   ArrowRight,
+  Award,
   CalendarCheck,
   CheckCircle2,
   Clock,
@@ -55,16 +56,31 @@ export default async function BerandaPage() {
 
   const examIds = [...new Set((sessionRows ?? []).map((s) => s.exam_id))]
   const { data: examRows } =
-    examIds.length > 0 ? await supabase.from("exams").select("id, nama_ujian").in("id", examIds) : { data: [] }
+    examIds.length > 0
+      ? await supabase.from("exams").select("id, nama_ujian, tampilkan_nilai").in("id", examIds)
+      : { data: [] }
   const examNameById = new Map((examRows ?? []).map((e) => [e.id, e.nama_ujian]))
+  const examTampilkanNilaiById = new Map((examRows ?? []).map((e) => [e.id, e.tampilkan_nilai]))
 
   const sessionStudentIds = (sessionStudents ?? []).map((s) => s.id)
   const { data: attemptRows } =
     sessionStudentIds.length > 0
-      ? await supabase.from("exam_attempts").select("session_student_id, status").in("session_student_id", sessionStudentIds)
+      ? await supabase
+          .from("exam_attempts")
+          .select("id, session_student_id, status")
+          .in("session_student_id", sessionStudentIds)
       : { data: [] }
-  const statusBySessionStudent = new Map((attemptRows ?? []).map((a) => [a.session_student_id, a.status]))
+  const attemptBySessionStudent = new Map((attemptRows ?? []).map((a) => [a.session_student_id, a]))
   const sessionStudentBySession = new Map((sessionStudents ?? []).map((s) => [s.session_id, s]))
+
+  const doneAttemptIds = (attemptRows ?? [])
+    .filter((a) => a.status === "submitted" || a.status === "auto_submitted")
+    .map((a) => a.id)
+  const { data: scoreRows } =
+    doneAttemptIds.length > 0
+      ? await supabase.from("scores").select("attempt_id, total").in("attempt_id", doneAttemptIds)
+      : { data: [] }
+  const nilaiByAttempt = new Map((scoreRows ?? []).map((s) => [s.attempt_id, s.total]))
 
   const nowMs = now()
 
@@ -74,18 +90,23 @@ export default async function BerandaPage() {
 
   const processedSessions = (sessionRows ?? []).map((session) => {
     const ss = sessionStudentBySession.get(session.id)
-    const attemptStatus = ss ? statusBySessionStudent.get(ss.id) : undefined
+    const attempt = ss ? attemptBySessionStudent.get(ss.id) : undefined
+    const attemptStatus = attempt?.status
     const start = new Date(session.waktu_mulai).getTime()
     const end = start + session.durasi_menit * 60_000
 
     let label: string
     let canEnter = false
     let statusTheme: "active" | "ongoing" | "done" | "upcoming" | "expired" = "upcoming"
+    let nilai: number | null = null
 
     if (attemptStatus === "submitted" || attemptStatus === "auto_submitted") {
       label = "Selesai Dikerjakan"
       statusTheme = "done"
       completedExamsCount++
+      if (attempt && examTampilkanNilaiById.get(session.exam_id)) {
+        nilai = nilaiByAttempt.get(attempt.id) ?? null
+      }
     } else if (nowMs < start) {
       label = "Belum Dimulai"
       statusTheme = "upcoming"
@@ -106,6 +127,7 @@ export default async function BerandaPage() {
       label,
       canEnter,
       statusTheme,
+      nilai,
     }
   })
 
@@ -238,7 +260,7 @@ export default async function BerandaPage() {
             </div>
           ) : (
             processedSessions.map(
-              ({ session, ss, canEnter, statusTheme }) => {
+              ({ session, ss, canEnter, statusTheme, nilai }) => {
                 const isReady = statusTheme === "active"
                 const isOngoing = statusTheme === "ongoing"
                 const isDone = statusTheme === "done"
@@ -365,10 +387,23 @@ export default async function BerandaPage() {
                         </Button>
                       </Link>
                     ) : isDone ? (
-                      <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/60 py-3 text-xs font-medium text-muted-foreground">
-                        <CheckCircle2 className="size-4 text-emerald-500" />
-                        Jawaban ujian telah berhasil dikirimkan ke server.
-                      </div>
+                      nilai !== null ? (
+                        <div className="flex items-center justify-between gap-2 rounded-2xl bg-emerald-500/10 py-3 px-4">
+                          <span className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle2 className="size-4" />
+                            Jawaban berhasil dikirim & sudah dinilai
+                          </span>
+                          <span className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1 text-sm font-extrabold text-white">
+                            <Award className="size-4" />
+                            {nilai.toFixed(1)}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/60 py-3 text-xs font-medium text-muted-foreground">
+                          <CheckCircle2 className="size-4 text-emerald-500" />
+                          Jawaban ujian telah berhasil dikirimkan ke server.
+                        </div>
+                      )
                     ) : null}
                   </div>
                 )

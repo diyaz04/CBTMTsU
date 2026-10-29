@@ -67,6 +67,16 @@ export function EditExamDialog({
                 Acak urutan opsi jawaban
               </label>
             </div>
+            <div className="flex flex-col gap-2.5 rounded-xl border border-border/80 bg-muted/30 p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Setelah Ujian Selesai</p>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox name="tampilkanNilai" defaultChecked={exam.tampilkanNilai} />
+                Tampilkan nilai langsung ke siswa setelah submit
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Kalau dimatikan, nilai cuma bisa dilihat admin/proktor lewat Monitoring Live &amp; Penilaian.
+              </p>
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" disabled={pending}>

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
+import { Award, CheckCircle2 } from "lucide-react"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { createClient } from "@/lib/supabase/server"
 import { getAttemptData } from "@/lib/ujian/actions"
@@ -32,9 +33,37 @@ export default async function KerjakanPage({
     .maybeSingle()
 
   if (attempt && (attempt.status === "submitted" || attempt.status === "auto_submitted")) {
+    const { data: session } = await supabase
+      .from("exam_sessions")
+      .select("exam_id")
+      .eq("id", sessionId)
+      .maybeSingle()
+    const { data: exam } = session
+      ? await supabase.from("exams").select("tampilkan_nilai").eq("id", session.exam_id).maybeSingle()
+      : { data: null }
+
+    let nilai: number | null = null
+    if (exam?.tampilkan_nilai) {
+      const { data: score } = await supabase
+        .from("scores")
+        .select("total")
+        .eq("attempt_id", attempt.id)
+        .maybeSingle()
+      nilai = score?.total ?? null
+    }
+
     return (
-      <div className="mx-auto flex max-w-sm flex-col items-center gap-3 p-10 text-center">
+      <div className="mx-auto flex max-w-sm flex-col items-center gap-4 p-10 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="size-7" />
+        </div>
         <p className="font-medium">Ujian ini sudah kamu selesaikan.</p>
+        {nilai !== null && (
+          <span className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-2.5 text-lg font-extrabold text-white">
+            <Award className="size-5" />
+            Nilai: {nilai.toFixed(1)}
+          </span>
+        )}
         <Link href="/beranda" className="underline">
           Kembali ke beranda
         </Link>

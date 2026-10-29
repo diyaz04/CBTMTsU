@@ -70,6 +70,7 @@ export interface Database {
           created_at: string
           acak_soal: boolean
           acak_opsi: boolean
+          tampilkan_nilai: boolean
         }
         Insert: {
           id?: string
@@ -80,6 +81,7 @@ export interface Database {
           created_at?: string
           acak_soal?: boolean
           acak_opsi?: boolean
+          tampilkan_nilai?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["exams"]["Insert"]>
         Relationships: []

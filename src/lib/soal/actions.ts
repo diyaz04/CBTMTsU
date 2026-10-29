@@ -25,10 +25,16 @@ export async function createExam(_prevState: ActionState, formData: FormData): P
 
   const acakSoal = formData.get("acakSoal") === "on"
   const acakOpsi = formData.get("acakOpsi") === "on"
+  const tampilkanNilai = formData.get("tampilkanNilai") === "on"
 
-  const { error } = await supabase
-    .from("exams")
-    .insert({ school_id: schoolId, nama_ujian: namaUjian, paket, acak_soal: acakSoal, acak_opsi: acakOpsi })
+  const { error } = await supabase.from("exams").insert({
+    school_id: schoolId,
+    nama_ujian: namaUjian,
+    paket,
+    acak_soal: acakSoal,
+    acak_opsi: acakOpsi,
+    tampilkan_nilai: tampilkanNilai,
+  })
   if (error) return { error: error.message }
 
   revalidatePath("/bank-soal")
@@ -45,10 +51,17 @@ export async function updateExam(_prevState: ActionState, formData: FormData): P
 
   const acakSoal = formData.get("acakSoal") === "on"
   const acakOpsi = formData.get("acakOpsi") === "on"
+  const tampilkanNilai = formData.get("tampilkanNilai") === "on"
 
   const { error } = await supabase
     .from("exams")
-    .update({ nama_ujian: namaUjian, paket, acak_soal: acakSoal, acak_opsi: acakOpsi })
+    .update({
+      nama_ujian: namaUjian,
+      paket,
+      acak_soal: acakSoal,
+      acak_opsi: acakOpsi,
+      tampilkan_nilai: tampilkanNilai,
+    })
     .eq("id", id)
   if (error) return { error: error.message }
 

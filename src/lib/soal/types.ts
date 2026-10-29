@@ -7,6 +7,7 @@ export interface ExamRow {
   createdAt: string
   acakSoal: boolean
   acakOpsi: boolean
+  tampilkanNilai: boolean
 }
 
 export interface GroupRow {
