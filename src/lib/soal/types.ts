@@ -5,6 +5,8 @@ export interface ExamRow {
   namaUjian: string
   paket: string
   createdAt: string
+  acakSoal: boolean
+  acakOpsi: boolean
 }
 
 export interface GroupRow {

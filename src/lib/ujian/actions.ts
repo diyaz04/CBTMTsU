@@ -3,16 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { requireStudentAccess } from "@/lib/ujian/require-access"
 import { isValidGlobalToken } from "@/lib/ujian/global-token"
+import { shuffle, seededShuffle } from "@/lib/ujian/shuffle"
 import type { AttemptData, RunnerQuestion } from "@/lib/ujian/types"
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
 
 type StartResult = { attemptId: string; error?: undefined } | { error: string; attemptId?: undefined }
 
@@ -72,6 +64,8 @@ export async function startAttempt(sessionId: string, token: string): Promise<St
 
   if (now > end) return { error: "Waktu ujian sudah habis." }
 
+  const { data: examRow } = await admin.from("exams").select("acak_soal").eq("id", session.exam_id).maybeSingle()
+
   const { data: groups } = await admin
     .from("question_groups")
     .select("id")
@@ -82,7 +76,8 @@ export async function startAttempt(sessionId: string, token: string): Promise<St
     groupIds.length > 0
       ? await admin.from("questions").select("id").in("group_id", groupIds).order("urutan")
       : { data: [] }
-  const soalOrder = shuffle((questions ?? []).map((q) => q.id))
+  const naturalOrder = (questions ?? []).map((q) => q.id)
+  const soalOrder = examRow?.acak_soal === false ? naturalOrder : shuffle(naturalOrder)
 
   if (soalOrder.length === 0) return { error: "Ujian ini belum punya soal." }
 
@@ -117,8 +112,12 @@ export async function getAttemptData(attemptId: string): Promise<AttemptData | n
     .eq("id", attempt.session_student_id)
     .maybeSingle()
   const { data: session } = sessionStudent
-    ? await admin.from("exam_sessions").select("durasi_menit").eq("id", sessionStudent.session_id).maybeSingle()
+    ? await admin.from("exam_sessions").select("exam_id, durasi_menit").eq("id", sessionStudent.session_id).maybeSingle()
     : { data: null }
+  const { data: examRow } = session
+    ? await admin.from("exams").select("acak_opsi").eq("id", session.exam_id).maybeSingle()
+    : { data: null }
+  const acakOpsi = examRow?.acak_opsi === true
 
   const questionIds = (attempt.soal_order ?? []) as string[]
   const { data: questionRows } =
@@ -153,7 +152,9 @@ export async function getAttemptData(attemptId: string): Promise<AttemptData | n
         konten: q.konten,
         gambarUrl: q.gambar_url,
         bobot: q.bobot,
-        options: optionsByQuestion.get(id) ?? [],
+        options: acakOpsi
+          ? seededShuffle(optionsByQuestion.get(id) ?? [], `${attempt.id}:${id}`)
+          : optionsByQuestion.get(id) ?? [],
       },
     ]
   })

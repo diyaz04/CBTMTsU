@@ -68,6 +68,8 @@ export interface Database {
           paket: string
           created_by: string | null
           created_at: string
+          acak_soal: boolean
+          acak_opsi: boolean
         }
         Insert: {
           id?: string
@@ -76,6 +78,8 @@ export interface Database {
           paket: string
           created_by?: string | null
           created_at?: string
+          acak_soal?: boolean
+          acak_opsi?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["exams"]["Insert"]>
         Relationships: []

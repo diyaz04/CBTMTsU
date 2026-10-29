@@ -23,7 +23,12 @@ export async function createExam(_prevState: ActionState, formData: FormData): P
   const paket = String(formData.get("paket") ?? "").trim()
   if (!namaUjian || !paket) return { error: "Nama ujian dan paket wajib diisi." }
 
-  const { error } = await supabase.from("exams").insert({ school_id: schoolId, nama_ujian: namaUjian, paket })
+  const acakSoal = formData.get("acakSoal") === "on"
+  const acakOpsi = formData.get("acakOpsi") === "on"
+
+  const { error } = await supabase
+    .from("exams")
+    .insert({ school_id: schoolId, nama_ujian: namaUjian, paket, acak_soal: acakSoal, acak_opsi: acakOpsi })
   if (error) return { error: error.message }
 
   revalidatePath("/bank-soal")
@@ -38,9 +43,12 @@ export async function updateExam(_prevState: ActionState, formData: FormData): P
   const paket = String(formData.get("paket") ?? "").trim()
   if (!id || !namaUjian || !paket) return { error: "Nama ujian dan paket wajib diisi." }
 
+  const acakSoal = formData.get("acakSoal") === "on"
+  const acakOpsi = formData.get("acakOpsi") === "on"
+
   const { error } = await supabase
     .from("exams")
-    .update({ nama_ujian: namaUjian, paket })
+    .update({ nama_ujian: namaUjian, paket, acak_soal: acakSoal, acak_opsi: acakOpsi })
     .eq("id", id)
   if (error) return { error: error.message }
 

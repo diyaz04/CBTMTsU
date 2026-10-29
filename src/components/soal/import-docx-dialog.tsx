@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useState } from "react"
+import { Download } from "lucide-react"
 import { importQuestionsDocx, type ImportDocxSummary } from "@/lib/soal/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +35,14 @@ export function ImportDocxDialog({ examId }: { examId: string }) {
             soal + tabel soal per tipe). Grup dengan kode yang sudah ada akan diperbarui, bukan
             dobel.
           </p>
+          <a
+            href="/template-soal-kosong.docx"
+            download
+            className="flex items-center gap-2 rounded-xl border border-dashed border-border/80 bg-muted/30 px-3 py-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted/60"
+          >
+            <Download className="size-3.5 text-primary" />
+            Download Template Soal Kosong (.docx)
+          </a>
           <form action={formAction} className="flex flex-col gap-4">
             <input type="hidden" name="examId" value={examId} />
             <div className="flex flex-col gap-2">

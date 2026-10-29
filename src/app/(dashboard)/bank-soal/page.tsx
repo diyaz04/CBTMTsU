@@ -8,7 +8,7 @@ export default async function BankSoalPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from("exams")
-    .select("id, nama_ujian, paket, created_at")
+    .select("id, nama_ujian, paket, created_at, acak_soal, acak_opsi")
     .order("created_at", { ascending: false })
 
   const exams: ExamRow[] = (data ?? []).map((e) => ({
@@ -16,6 +16,8 @@ export default async function BankSoalPage() {
     namaUjian: e.nama_ujian,
     paket: e.paket,
     createdAt: e.created_at,
+    acakSoal: e.acak_soal,
+    acakOpsi: e.acak_opsi,
   }))
 
   const totalPaket = new Set(exams.map((e) => e.paket)).size
