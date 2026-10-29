@@ -17,6 +17,14 @@ import type { ExamRow } from "@/lib/soal/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -66,81 +74,84 @@ export function ExamList({ exams }: { exams: ExamRow[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {exams.map((exam) => (
-          <div
-            key={exam.id}
-            className="group relative flex flex-col justify-between gap-4 rounded-3xl border border-border/80 bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
-          >
-            {/* Header: Icon, Name, and Menu */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform group-hover:scale-105">
-                  <BookOpen className="size-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                    {exam.namaUjian}
-                  </h3>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Badge variant="secondary" className="rounded-md font-semibold text-[10px] px-2 py-0.2">
-                      <Layers className="size-3 mr-1" />
-                      Paket {exam.paket}
-                    </Badge>
+      <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
+        <Table>
+          <TableHeader className="bg-muted/40">
+            <TableRow>
+              <TableHead className="w-12 text-center text-xs font-bold text-muted-foreground">#</TableHead>
+              <TableHead className="text-xs font-bold text-muted-foreground">NAMA UJIAN</TableHead>
+              <TableHead className="text-xs font-bold text-muted-foreground">PAKET</TableHead>
+              <TableHead className="text-xs font-bold text-muted-foreground">DIBUAT</TableHead>
+              <TableHead className="w-56 text-right text-xs font-bold text-muted-foreground">AKSI</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {exams.map((exam, idx) => (
+              <TableRow key={exam.id} className="transition-colors hover:bg-muted/30">
+                <TableCell className="text-center text-xs font-medium text-muted-foreground">{idx + 1}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <BookOpen className="size-4.5" />
+                    </div>
+                    <span className="font-semibold text-xs text-foreground line-clamp-1">{exam.namaUjian}</span>
                   </div>
-                </div>
-              </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="rounded-md font-semibold text-[10px] px-2 py-0.2">
+                    <Layers className="size-3 mr-1" />
+                    {exam.paket}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Calendar className="size-3" />
+                    {exam.createdAt
+                      ? new Date(exam.createdAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Link href={`/bank-soal/${exam.id}`}>
+                      <Button size="sm" variant="outline" className="gap-1.5 rounded-xl border-border/80 text-xs font-semibold">
+                        Kelola Soal
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </Link>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-lg text-muted-foreground hover:text-foreground" />}>
-                  <MoreHorizontal className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg">
-                  <DropdownMenuItem
-                    onClick={() => setEditing(exam)}
-                    className="flex items-center gap-2 text-xs font-medium"
-                  >
-                    <Pencil className="size-3.5 text-muted-foreground" />
-                    Edit Ujian
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setDeleting(exam)}
-                    className="flex items-center gap-2 text-xs font-medium text-destructive"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Hapus Ujian
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Bottom: Date & Enter Button */}
-            <div className="flex items-center justify-between border-t border-border/60 pt-3">
-              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Calendar className="size-3" />
-                {exam.createdAt
-                  ? new Date(exam.createdAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "-"}
-              </span>
-
-              <Link href={`/bank-soal/${exam.id}`}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 rounded-xl border-border/80 text-xs font-semibold group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-transparent transition-all"
-                >
-                  Kelola Soal
-                  <ArrowRight className="size-3.5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        ))}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-lg text-muted-foreground hover:text-foreground" />}>
+                        <MoreHorizontal className="size-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg">
+                        <DropdownMenuItem
+                          onClick={() => setEditing(exam)}
+                          className="flex items-center gap-2 text-xs font-medium"
+                        >
+                          <Pencil className="size-3.5 text-muted-foreground" />
+                          Edit Ujian
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeleting(exam)}
+                          className="flex items-center gap-2 text-xs font-medium text-destructive"
+                        >
+                          <Trash2 className="size-3.5" />
+                          Hapus Ujian
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <EditExamDialog exam={editing} onOpenChange={(open) => !open && setEditing(null)} />
