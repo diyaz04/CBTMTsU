@@ -68,6 +68,16 @@ export async function updateSession(_prevState: ActionState, formData: FormData)
   return { success: "Sesi berhasil diperbarui." }
 }
 
+export async function toggleSessionActive(id: string, examId: string, isActive: boolean) {
+  const { supabase } = await requireSesiAccess()
+  const { error } = await supabase.from("exam_sessions").update({ is_active: isActive }).eq("id", id)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/ujian/${examId}`)
+  revalidatePath("/beranda")
+  return { success: isActive ? "Sesi diaktifkan, sekarang muncul di beranda siswa." : "Sesi dinonaktifkan, disembunyikan dari beranda siswa." }
+}
+
 export async function deleteSession(id: string, examId: string) {
   const { supabase } = await requireSesiAccess()
   const { error } = await supabase.from("exam_sessions").delete().eq("id", id)

@@ -23,10 +23,11 @@ export async function startAttempt(sessionId: string, token: string): Promise<St
 
   const { data: session } = await admin
     .from("exam_sessions")
-    .select("id, exam_id, waktu_mulai, durasi_menit")
+    .select("id, exam_id, waktu_mulai, durasi_menit, is_active")
     .eq("id", sessionId)
     .maybeSingle()
   if (!session) return { error: "Sesi ujian tidak ditemukan." }
+  if (!session.is_active) return { error: "Ujian ini belum diaktifkan oleh pengawas." }
 
   if (!isValidGlobalToken(token)) return { error: "Token salah atau sudah kedaluwarsa, minta kode terbaru ke pengawas." }
 

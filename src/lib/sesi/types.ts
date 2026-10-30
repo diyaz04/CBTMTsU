@@ -7,6 +7,7 @@ export interface SessionRow {
   mapel: string
   waktuMulai: string
   durasiMenit: number
+  isActive: boolean
 }
 
 export interface SessionStudentRow {

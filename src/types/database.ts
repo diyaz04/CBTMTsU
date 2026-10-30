@@ -168,6 +168,7 @@ export interface Database {
           waktu_mulai: string
           durasi_menit: number
           created_at: string
+          is_active: boolean
         }
         Insert: {
           id?: string
@@ -180,6 +181,7 @@ export interface Database {
           waktu_mulai: string
           durasi_menit: number
           created_at?: string
+          is_active?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["exam_sessions"]["Insert"]>
         Relationships: []

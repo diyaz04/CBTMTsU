@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, CalendarCheck2, Clock, DoorOpen, Layers, Users } from "lucide-react"
+import { ArrowLeft, CalendarCheck2, Clock, DoorOpen, Download, Layers, Users } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { AddSessionDialog } from "@/components/sesi/add-session-dialog"
 import { SessionList } from "@/components/sesi/session-list"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import type { SessionRow, SessionStudentRow } from "@/lib/sesi/types"
 import type { StudentRow } from "@/lib/students/types"
 
@@ -25,7 +26,7 @@ export default async function UjianDetailPage({
 
   const { data: sessionRows } = await supabase
     .from("exam_sessions")
-    .select("id, exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit")
+    .select("id, exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit, is_active")
     .eq("exam_id", examId)
     .order("tanggal")
     .order("sesi_ke")
@@ -39,6 +40,7 @@ export default async function UjianDetailPage({
     mapel: s.mapel,
     waktuMulai: s.waktu_mulai,
     durasiMenit: s.durasi_menit,
+    isActive: s.is_active,
   }))
 
   const { data: studentRows } = await supabase
@@ -112,7 +114,15 @@ export default async function UjianDetailPage({
             </p>
           </div>
 
-          <AddSessionDialog examId={exam.id} defaultMapel={exam.nama_ujian} />
+          <div className="flex items-center gap-2">
+            <a href={`/api/ujian/${exam.id}/hasil`} download>
+              <Button variant="outline" className="gap-2 rounded-xl shadow-sm">
+                <Download className="size-4" />
+                Download Hasil (Excel)
+              </Button>
+            </a>
+            <AddSessionDialog examId={exam.id} defaultMapel={exam.nama_ujian} />
+          </div>
         </div>
       </div>
 

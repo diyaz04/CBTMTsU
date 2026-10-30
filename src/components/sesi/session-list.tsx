@@ -8,6 +8,8 @@ import {
   ChevronUp,
   Clock,
   DoorOpen,
+  Eye,
+  EyeOff,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -15,7 +17,7 @@ import {
   UserMinus,
   Users,
 } from "lucide-react"
-import { deleteSession, removeSessionStudent } from "@/lib/sesi/actions"
+import { deleteSession, removeSessionStudent, toggleSessionActive } from "@/lib/sesi/actions"
 import type { SessionRow, SessionStudentRow } from "@/lib/sesi/types"
 import type { StudentRow } from "@/lib/students/types"
 import { Badge } from "@/components/ui/badge"
@@ -89,6 +91,14 @@ export function SessionList({
     })
   }
 
+  function handleToggleActive(session: SessionRow) {
+    startTransition(async () => {
+      const result = await toggleSessionActive(session.id, examId, !session.isActive)
+      if (result?.error) toast.error(result.error)
+      else toast.success(result?.success ?? "Status sesi diperbarui.")
+    })
+  }
+
   function handleRemoveStudent(sessionStudentId: string) {
     startTransition(async () => {
       const result = await removeSessionStudent(sessionStudentId, examId)
@@ -121,7 +131,9 @@ export function SessionList({
           return (
             <div
               key={session.id}
-              className="flex flex-col gap-4 rounded-3xl border border-border/80 bg-card p-5 shadow-sm transition-all sm:p-6"
+              className={`flex flex-col gap-4 rounded-3xl border bg-card p-5 shadow-sm transition-all sm:p-6 ${
+                session.isActive ? "border-border/80" : "border-dashed border-border/60 opacity-75"
+              }`}
             >
               {/* Session Top Info */}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -133,6 +145,11 @@ export function SessionList({
                     <h3 className="text-base font-bold text-foreground sm:text-lg">
                       {session.mapel}
                     </h3>
+                    {!session.isActive && (
+                      <Badge variant="outline" className="rounded-md text-[10px] font-semibold text-muted-foreground">
+                        Nonaktif
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
@@ -153,6 +170,26 @@ export function SessionList({
 
                 {/* Actions Header */}
                 <div className="flex items-center gap-2.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => handleToggleActive(session)}
+                    className={`gap-1.5 rounded-xl text-xs font-semibold ${
+                      session.isActive
+                        ? "border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
+                        : "text-muted-foreground"
+                    }`}
+                    title={
+                      session.isActive
+                        ? "Klik untuk sembunyikan sesi ini dari beranda siswa"
+                        : "Klik untuk tampilkan sesi ini di beranda siswa"
+                    }
+                  >
+                    {session.isActive ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                    {session.isActive ? "Aktif" : "Nonaktif"}
+                  </Button>
+
                   {/* Menu Options */}
                   <DropdownMenu>
                     <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-xl" />}>

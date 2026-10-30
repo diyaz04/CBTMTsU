@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { Award, CheckCircle2 } from "lucide-react"
+import { Award, CheckCircle2, Lock } from "lucide-react"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { createClient } from "@/lib/supabase/server"
 import { getAttemptData } from "@/lib/ujian/actions"
@@ -79,10 +79,28 @@ export default async function KerjakanPage({
       .maybeSingle()
     const { data: session } = await supabase
       .from("exam_sessions")
-      .select("exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit")
+      .select("exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit, is_active")
       .eq("id", sessionId)
       .maybeSingle()
     if (!student || !session) notFound()
+
+    if (!session.is_active) {
+      return (
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 p-10 text-center">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+            <Lock className="size-7" />
+          </div>
+          <p className="font-medium">Ujian ini belum diaktifkan oleh pengawas.</p>
+          <p className="text-xs text-muted-foreground">
+            Hubungi pengawas atau proktor ruangan untuk informasi lebih lanjut.
+          </p>
+          <Link href="/beranda" className="underline">
+            Kembali ke beranda
+          </Link>
+        </div>
+      )
+    }
+
     const { data: exam } = await supabase
       .from("exams")
       .select("nama_ujian")

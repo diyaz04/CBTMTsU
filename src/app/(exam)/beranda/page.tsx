@@ -50,6 +50,7 @@ export default async function BerandaPage() {
           .from("exam_sessions")
           .select("id, exam_id, tanggal, sesi_ke, ruang, mapel, waktu_mulai, durasi_menit")
           .in("id", sessionIds)
+          .eq("is_active", true)
           .order("tanggal")
           .order("sesi_ke")
       : { data: [] }
