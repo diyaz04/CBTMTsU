@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { toast } from "sonner"
 import {
   Activity,
   Award,
@@ -11,6 +12,8 @@ import {
   Clock,
   DoorOpen,
   Hourglass,
+  PauseCircle,
+  PlayCircle,
   Radio,
   RefreshCw,
   UserX,
@@ -23,6 +26,8 @@ import {
   type MonitoringStatus,
   type MonitoringStudentRow,
 } from "@/lib/monitoring/actions"
+import { pauseAttempt, resumeAttempt } from "@/lib/ujian/pause-actions"
+import { Button } from "@/components/ui/button"
 
 const POLL_INTERVAL_MS = 7_000
 
@@ -64,6 +69,11 @@ const STATUS_META: Record<MonitoringStatus, { label: string; icon: typeof UserX;
     icon: Activity,
     className: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   },
+  dijeda: {
+    label: "Dijeda",
+    icon: PauseCircle,
+    className: "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400",
+  },
   selesai: {
     label: "Selesai",
     icon: CheckCircle2,
@@ -72,15 +82,48 @@ const STATUS_META: Record<MonitoringStatus, { label: string; icon: typeof UserX;
 }
 
 function sessionCounts(session: MonitoringSessionCard) {
-  const counts = { belum_login: 0, menunggu_mulai: 0, mengerjakan: 0, selesai: 0 }
+  const counts = { belum_login: 0, menunggu_mulai: 0, mengerjakan: 0, dijeda: 0, selesai: 0 }
   for (const s of session.students) counts[s.status]++
   return counts
 }
 
-function StudentRow({ student, nowMs }: { student: MonitoringStudentRow; nowMs: number }) {
+function StudentRow({
+  student,
+  nowMs,
+  onRefetch,
+}: {
+  student: MonitoringStudentRow
+  nowMs: number
+  onRefetch: () => void
+}) {
   const meta = STATUS_META[student.status]
   const Icon = meta.icon
-  const showProgress = student.status === "mengerjakan" || student.status === "selesai"
+  const showProgress = student.status === "mengerjakan" || student.status === "dijeda" || student.status === "selesai"
+  const [pending, startTransition] = useTransition()
+
+  function handlePause() {
+    if (!student.attemptId) return
+    startTransition(async () => {
+      const result = await pauseAttempt(student.attemptId!)
+      if (result?.error) toast.error(result.error)
+      else {
+        toast.success(`Timer ${student.nama} dijeda.`)
+        onRefetch()
+      }
+    })
+  }
+
+  function handleResume() {
+    if (!student.attemptId) return
+    startTransition(async () => {
+      const result = await resumeAttempt(student.attemptId!)
+      if (result?.error) toast.error(result.error)
+      else {
+        toast.success(`Timer ${student.nama} dilanjutkan.`)
+        onRefetch()
+      }
+    })
+  }
 
   return (
     <div className="flex flex-col gap-2.5 rounded-2xl border border-border/70 bg-card p-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -124,6 +167,33 @@ function StudentRow({ student, nowMs }: { student: MonitoringStudentRow; nowMs: 
             {student.nilai.toFixed(1)}
           </span>
         )}
+
+        {student.status === "mengerjakan" && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            onClick={handlePause}
+            className="gap-1.5 rounded-lg border-rose-500/30 text-[11px] font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400"
+            title="Jeda timer siswa ini (misal karena putus koneksi)"
+          >
+            <PauseCircle className="size-3.5" />
+            Jeda
+          </Button>
+        )}
+        {student.status === "dijeda" && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            onClick={handleResume}
+            className="gap-1.5 rounded-lg border-emerald-500/30 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+            title="Lanjutkan timer siswa ini sekarang"
+          >
+            <PlayCircle className="size-3.5" />
+            Lanjutkan
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -133,10 +203,12 @@ function SessionCard({
   session,
   expanded,
   onToggle,
+  onRefetch,
 }: {
   session: MonitoringSessionCard
   expanded: boolean
   onToggle: () => void
+  onRefetch: () => void
 }) {
   const counts = sessionCounts(session)
   const total = session.students.length
@@ -211,6 +283,12 @@ function SessionCard({
           <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
           {counts.mengerjakan} Mengerjakan
         </span>
+        {counts.dijeda > 0 && (
+          <span className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-700 dark:text-rose-400">
+            <PauseCircle className="size-3.5" />
+            {counts.dijeda} Dijeda
+          </span>
+        )}
         <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400">
           <CheckCircle2 className="size-3.5 text-emerald-500" />
           {counts.selesai} Selesai
@@ -223,13 +301,19 @@ function SessionCard({
       </button>
 
       {expanded && (
-        <MonitoringStudentList session={session} />
+        <MonitoringStudentList session={session} onRefetch={onRefetch} />
       )}
     </div>
   )
 }
 
-function MonitoringStudentList({ session }: { session: MonitoringSessionCard }) {
+function MonitoringStudentList({
+  session,
+  onRefetch,
+}: {
+  session: MonitoringSessionCard
+  onRefetch: () => void
+}) {
   const [nowMs, setNowMs] = useState(() => now())
 
   useEffect(() => {
@@ -243,7 +327,7 @@ function MonitoringStudentList({ session }: { session: MonitoringSessionCard }) 
         <p className="py-4 text-center text-xs text-muted-foreground">Belum ada peserta terdaftar di sesi ini.</p>
       ) : (
         session.students.map((student) => (
-          <StudentRow key={student.sessionStudentId} student={student} nowMs={nowMs} />
+          <StudentRow key={student.sessionStudentId} student={student} nowMs={nowMs} onRefetch={onRefetch} />
         ))
       )}
     </div>
@@ -258,22 +342,23 @@ export function MonitoringDashboard({ initialData }: { initialData: MonitoringDa
   const [pending, setPending] = useState(false)
   const fetchingRef = useRef(false)
 
-  useEffect(() => {
-    async function refetch() {
-      if (fetchingRef.current) return
-      fetchingRef.current = true
-      setPending(true)
-      try {
-        const next = await getMonitoringData()
-        setData(next)
-      } catch {
-        // Diem-diem aja kalau sesi admin kedaluwarsa pas poll jalan —
-        // data terakhir yang berhasil tetap ditampilkan, nggak nge-crash UI.
-      } finally {
-        fetchingRef.current = false
-        setPending(false)
-      }
+  async function refetch() {
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+    setPending(true)
+    try {
+      const next = await getMonitoringData()
+      setData(next)
+    } catch {
+      // Diem-diem aja kalau sesi admin kedaluwarsa pas poll jalan —
+      // data terakhir yang berhasil tetap ditampilkan, nggak nge-crash UI.
+    } finally {
+      fetchingRef.current = false
+      setPending(false)
     }
+  }
+
+  useEffect(() => {
     const id = setInterval(refetch, POLL_INTERVAL_MS)
     return () => clearInterval(id)
   }, [])
@@ -311,7 +396,7 @@ export function MonitoringDashboard({ initialData }: { initialData: MonitoringDa
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="flex items-center gap-3 rounded-3xl border border-border/80 bg-card p-4 shadow-sm">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
             <UserX className="size-5" />
@@ -339,6 +424,16 @@ export function MonitoringDashboard({ initialData }: { initialData: MonitoringDa
           <div>
             <p className="text-[11px] font-semibold text-muted-foreground">Sedang Mengerjakan</p>
             <p className="text-xl font-extrabold text-foreground">{data.totals.mengerjakan}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-3xl border border-border/80 bg-card p-4 shadow-sm">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+            <PauseCircle className="size-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold text-muted-foreground">Dijeda</p>
+            <p className="text-xl font-extrabold text-foreground">{data.totals.dijeda}</p>
           </div>
         </div>
 
@@ -371,6 +466,7 @@ export function MonitoringDashboard({ initialData }: { initialData: MonitoringDa
               session={session}
               expanded={expanded.has(session.id)}
               onToggle={() => toggle(session.id)}
+              onRefetch={refetch}
             />
           ))
         )}

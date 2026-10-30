@@ -12,10 +12,11 @@ import {
   CircleAlert,
   Grid3X3,
   Loader2,
+  PauseCircle,
   SendHorizontal,
   Timer,
 } from "lucide-react"
-import { saveAnswer, submitAttempt } from "@/lib/ujian/actions"
+import { getPauseStatus, saveAnswer, submitAttempt } from "@/lib/ujian/actions"
 import { now } from "@/lib/now"
 import type { AttemptData, RunnerAnswer } from "@/lib/ujian/types"
 import { Badge } from "@/components/ui/badge"
@@ -58,8 +59,8 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
 
   const deadline = useMemo(() => {
     const started = initialData.startedAt ? new Date(initialData.startedAt).getTime() : now()
-    return started + initialData.durasiMenit * 60_000
-  }, [initialData.startedAt, initialData.durasiMenit])
+    return started + initialData.durasiMenit * 60_000 + initialData.pausedSeconds * 1000
+  }, [initialData.startedAt, initialData.durasiMenit, initialData.pausedSeconds])
 
   const [nowMs, setNowMs] = useState(now)
   useEffect(() => {
@@ -69,7 +70,28 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
 
   const remaining = deadline - nowMs
 
+  // Admin/proktor bisa jeda timer siswa yang putus koneksi dari Monitoring
+  // Live. Polling ringan di sini cuma buat NGECEK status jeda (bukan nyabut
+  // jeda-nya) — kalau tab siswa somehow masih kebuka pas dijeda, UI langsung
+  // keblokir tanpa nunggu dia reload. Jeda beneran kecabut pas halaman ujian
+  // ini dibuka ulang (getAttemptData di server), bukan dari polling ini.
+  const [isPaused, setIsPaused] = useState(false)
   useEffect(() => {
+    let cancelled = false
+    async function checkPause() {
+      const result = await getPauseStatus(initialData.attemptId)
+      if (!cancelled) setIsPaused(result.isPaused)
+    }
+    checkPause()
+    const id = setInterval(checkPause, 15_000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [initialData.attemptId])
+
+  useEffect(() => {
+    if (isPaused) return
     if (remaining <= 0 && !autoSubmittedRef.current) {
       autoSubmittedRef.current = true
       startTransition(async () => {
@@ -78,7 +100,7 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
         router.push("/beranda")
       })
     }
-  }, [remaining, initialData.attemptId, router])
+  }, [remaining, isPaused, initialData.attemptId, router])
 
   const question = initialData.questions[index]
   const total = initialData.questions.length
@@ -443,6 +465,23 @@ export function ExamRunner({ initialData }: { initialData: AttemptData }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Overlay Jeda — admin/proktor lagi ngejeda timer ujian ini */}
+      {isPaused && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/95 p-6 text-center backdrop-blur-sm">
+          <div className="flex size-16 items-center justify-center rounded-3xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+            <PauseCircle className="size-8" />
+          </div>
+          <h2 className="text-lg font-bold text-foreground">Ujian Dijeda Sementara</h2>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Pengawas menjeda timer ujian kamu, mungkin karena koneksi sempat terputus. Jawaban yang sudah kamu isi
+            tetap tersimpan aman. Muat ulang halaman ini untuk melanjutkan pengerjaan.
+          </p>
+          <Button onClick={() => window.location.reload()} className="rounded-xl">
+            Muat Ulang Halaman
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

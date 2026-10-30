@@ -211,6 +211,8 @@ export interface Database {
           started_at: string | null
           submitted_at: string | null
           created_at: string
+          paused_at: string | null
+          paused_duration_seconds: number
         }
         Insert: {
           id?: string
@@ -220,6 +222,8 @@ export interface Database {
           started_at?: string | null
           submitted_at?: string | null
           created_at?: string
+          paused_at?: string | null
+          paused_duration_seconds?: number
         }
         Update: Partial<Database["public"]["Tables"]["exam_attempts"]["Insert"]>
         Relationships: []

@@ -3,10 +3,11 @@
 import { requireSesiAccess } from "@/lib/sesi/require-access"
 import { now } from "@/lib/now"
 
-export type MonitoringStatus = "belum_login" | "menunggu_mulai" | "mengerjakan" | "selesai"
+export type MonitoringStatus = "belum_login" | "menunggu_mulai" | "mengerjakan" | "dijeda" | "selesai"
 
 export interface MonitoringStudentRow {
   sessionStudentId: string
+  attemptId: string | null
   nama: string
   kelas: string
   noPeserta: string
@@ -33,7 +34,7 @@ export interface MonitoringSessionCard {
 
 export interface MonitoringData {
   sessions: MonitoringSessionCard[]
-  totals: { belumLogin: number; menunggu: number; mengerjakan: number; selesai: number }
+  totals: { belumLogin: number; menunggu: number; mengerjakan: number; dijeda: number; selesai: number }
 }
 
 type QuestionMeta = { bobot: number; modeKoreksi: string; tipeSoal: string }
@@ -98,7 +99,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
     ssIds.length > 0
       ? await supabase
           .from("exam_attempts")
-          .select("id, session_student_id, status, soal_order")
+          .select("id, session_student_id, status, soal_order, paused_at")
           .in("session_student_id", ssIds)
       : { data: [] }
   const attemptBySS = new Map((attempts ?? []).map((a) => [a.session_student_id, a]))
@@ -142,7 +143,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
     optionsByQuestion.set(o.question_id, list)
   }
 
-  const totals = { belumLogin: 0, menunggu: 0, mengerjakan: 0, selesai: 0 }
+  const totals = { belumLogin: 0, menunggu: 0, mengerjakan: 0, dijeda: 0, selesai: 0 }
 
   const sessions: MonitoringSessionCard[] = (sessionRows ?? []).map((session) => {
     const start = new Date(session.waktu_mulai).getTime()
@@ -169,7 +170,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
           answered = theseAnswers.filter((a) => a.selected_option_id || a.essay_text).length
 
           if (attempt.status === "in_progress") {
-            status = "mengerjakan"
+            status = attempt.paused_at ? "dijeda" : "mengerjakan"
             nilai = computeLiveScore(questionIds, theseAnswers, questionMetaById, optionsByQuestion)
           } else {
             status = "selesai"
@@ -181,6 +182,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
 
         return {
           sessionStudentId: ss.id,
+          attemptId: attempt?.id ?? null,
           nama: studentInfo?.nama ?? "Tidak diketahui",
           kelas: studentInfo?.kelas ?? "-",
           noPeserta: ss.no_peserta,
@@ -198,6 +200,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
       if (s.status === "belum_login") totals.belumLogin++
       else if (s.status === "menunggu_mulai") totals.menunggu++
       else if (s.status === "mengerjakan") totals.mengerjakan++
+      else if (s.status === "dijeda") totals.dijeda++
       else totals.selesai++
     }
 

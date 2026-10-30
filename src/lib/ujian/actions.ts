@@ -101,10 +101,25 @@ export async function getAttemptData(attemptId: string): Promise<AttemptData | n
 
   const { data: attempt } = await supabase
     .from("exam_attempts")
-    .select("id, status, started_at, soal_order, session_student_id")
+    .select("id, status, started_at, soal_order, session_student_id, paused_at, paused_duration_seconds")
     .eq("id", attemptId)
     .maybeSingle()
   if (!attempt) return null
+
+  // Siswa balik buka halaman ujian = sinyal dia udah kembali, jadi jeda
+  // (kalau ada, misal dipasang admin karena putus koneksi) otomatis
+  // dicabut di sini — bukan nunggu admin klik "Lanjutkan" manual. Durasi
+  // yang kepotong selama dijeda diakumulasi balik ke pausedSeconds biar
+  // deadline countdown di-extend, bukan ilang.
+  let pausedSeconds = attempt.paused_duration_seconds
+  if (attempt.paused_at) {
+    const elapsedSeconds = Math.floor((Date.now() - new Date(attempt.paused_at).getTime()) / 1000)
+    pausedSeconds += elapsedSeconds
+    await supabase
+      .from("exam_attempts")
+      .update({ paused_at: null, paused_duration_seconds: pausedSeconds })
+      .eq("id", attemptId)
+  }
 
   const { data: sessionStudent } = await supabase
     .from("session_students")
@@ -176,9 +191,25 @@ export async function getAttemptData(attemptId: string): Promise<AttemptData | n
     status: attempt.status,
     startedAt: attempt.started_at,
     durasiMenit: session?.durasi_menit ?? 0,
+    pausedSeconds,
     questions,
     answers,
   }
+}
+
+// Dipakai ExamRunner buat polling ringan — ngecek status jeda doang, TANPA
+// nyabut jeda-nya (beda sama getAttemptData). Jeda cuma kecabut pas halaman
+// ujian beneran dibuka ulang (page reopen), bukan dari heartbeat biasa di
+// tab yang masih kebuka — biar jeda tetap berfungsi kalau tab siswa somehow
+// masih kebuka tapi dia sendiri belum benar-benar balik.
+export async function getPauseStatus(attemptId: string): Promise<{ isPaused: boolean }> {
+  const { supabase } = await requireStudentAccess()
+  const { data: attempt } = await supabase
+    .from("exam_attempts")
+    .select("paused_at")
+    .eq("id", attemptId)
+    .maybeSingle()
+  return { isPaused: !!attempt?.paused_at }
 }
 
 export async function saveAnswer(
@@ -188,9 +219,14 @@ export async function saveAnswer(
 ) {
   const { supabase } = await requireStudentAccess()
 
-  const { data: attempt } = await supabase.from("exam_attempts").select("status").eq("id", attemptId).maybeSingle()
+  const { data: attempt } = await supabase
+    .from("exam_attempts")
+    .select("status, paused_at")
+    .eq("id", attemptId)
+    .maybeSingle()
   if (!attempt) return { error: "Percobaan ujian tidak ditemukan." }
   if (attempt.status !== "in_progress") return { error: "Ujian sudah berakhir, jawaban tidak disimpan." }
+  if (attempt.paused_at) return { error: "Ujian sedang dijeda pengawas, muat ulang halaman untuk melanjutkan." }
 
   const { error } = await supabase.from("answers").upsert(
     {
@@ -211,13 +247,14 @@ export async function submitAttempt(attemptId: string, auto = false) {
 
   const { data: attempt } = await supabase
     .from("exam_attempts")
-    .select("id, status, soal_order")
+    .select("id, status, soal_order, paused_at")
     .eq("id", attemptId)
     .maybeSingle()
   if (!attempt) return { error: "Percobaan ujian tidak ditemukan." }
   if (attempt.status === "submitted" || attempt.status === "auto_submitted") {
     return { success: true }
   }
+  if (attempt.paused_at) return { error: "Ujian sedang dijeda pengawas, muat ulang halaman untuk melanjutkan." }
 
   const questionIds = (attempt.soal_order ?? []) as string[]
   const { data: questionRows } =

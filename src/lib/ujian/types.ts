@@ -26,6 +26,7 @@ export interface AttemptData {
   status: AttemptStatus
   startedAt: string | null
   durasiMenit: number
+  pausedSeconds: number
   questions: RunnerQuestion[]
   answers: Record<string, RunnerAnswer>
 }
